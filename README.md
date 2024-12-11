@@ -8,7 +8,7 @@ an autonomous agent with the ability to detect anomalous behavior in network tra
 The dataset used in Trial 1 is : [Generated Dataset - Combined Sources](data/generated/raw/combined_source_data.csv).<br/>
 - It consists of artificially generated network traffic data from 9 emulated sources.
 ### Aposemat IoT-23 Data
-The dataset used in Trial 2 is: [CTU-IoT-Malware-Capture-20-1](data\real-world\raw\CTU-IoT-Malware-Capture-21-1conn.log.labeled.csv).<br/>
+The dataset used in Trial 2 is: [CTU-IoT-Malware-Capture-20-1](data/real-world/raw/CTU-IoT-Malware-Capture-21-1conn.log.labeled.csv).<br/>
 - It is part of [Aposemat IoT-23 dataset](https://www.stratosphereips.org/datasets-iot23) and consists of labeled malicious and benign IoT network traffic events
 
 ## Data Classification Procedure
