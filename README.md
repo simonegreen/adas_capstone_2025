@@ -6,9 +6,9 @@ an autonomous agent with the ability to detect anomalous behavior in network tra
 For a detailed abstract, team member roles, and a link to our document repository, please refer to the [Project Wiki](https://github.com/simonegreen/autonomous_datascientist/wiki)
 
 ## Data Sets
-### ChatGPT Generated Data
+### Artificially Generated Data
 The dataset used in Trial 1 is : [combined_source_data.csv](data/generated/raw/combined_source_data.csv).<br/>
-- It consists of artificially generated network traffic data from 9 emulated sources.
+- It consists of ChatGPT generated network traffic data from 9 emulated sources ( CrowdStrike, Armis, Solar Winds, Carbon Black, NetFlow, Nexus, Palo Alto Firewall, VROPS, and Windows Patch Information)
 ### Aposemat IoT-23 Data
 The dataset used in Trial 2 is: [CTU-IoT-Malware-Capture-21-1conn.log.labeled.csv](data/real-world/raw/CTU-IoT-Malware-Capture-21-1conn.log.labeled.csv).<br/>
 - It is part of [Aposemat IoT-23 dataset](https://www.stratosphereips.org/datasets-iot23) and consists of labeled malicious and benign IoT network traffic events
