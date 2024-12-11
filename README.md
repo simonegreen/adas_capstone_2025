@@ -27,8 +27,8 @@ Implemented data exploration and cleaning tasks: </br>
 5. Apply PCA (Principal Component Analysis) to reduce dimensionality by selecting the most influential features </br>
    (Note: This step was added for Trial 2 and manual feature selection was used in Trial 1)
 6. Save the cleaned and reduced dataset to a new CSV file
-   For Trial 1: [feature_selection_quantitative.csv](data/generated/processed/feature_selection_quantitative.csv)
-   For Trial 2:
+   For Trial 1: [feature_selection_quantitative.csv](data/generated/processed/feature_selection_quantitative.csv) </br>
+   For Trial 2: [feature_selection_RW21.csv](data/real-world/processed/feature_selection_RW21.csv)
 ### PHASE 2 - Trial 1
 > Corresponding notebook:  [Trial1.ipynb](Trial1.ipynb) </br>
 
