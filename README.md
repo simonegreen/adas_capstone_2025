@@ -31,7 +31,6 @@ Implemented data exploration and cleaning tasks: </br>
 6. Save the cleaned and reduced dataset to a new CSV file. </br>
    For Trial 1: [feature_selection_quantitative.csv](data/generated/processed/feature_selection_quantitative.csv) </br>
    For Trial 2: [feature_selection_RW21.csv](data/real-world/processed/feature_selection_RW21.csv) </br> </br>
-Note: We utilized an adaptation of the Q-Learning code within *Artificial Intelligence By Example 2nd ed.* by Denis Rothman 
 ### PHASE 2 - Trial 1 on Generated Data
 > Corresponding notebook:  [Trial1.ipynb](notebooks/Trial1.ipynb) </br>
 
@@ -46,7 +45,8 @@ This trial was implemented on the ChatGPT Generated Dataset, with the following 
 8. Identify the state and algorithm with the highest reward value.
 9. Apply the best state & action to cluster the data and assign cluster IDs.
 10. Identify clusters with <10% of the total data as anomalous.
-11. Extract and display IP addresses/unique identifiers corresponding to identified anomalous instances within the clusters.
+11. Extract and display IP addresses/unique identifiers corresponding to identified anomalous instances within the clusters. </br></br>
+Note: We utilized an adaptation of the Q-Learning code within *Artificial Intelligence By Example 2nd ed.* by Denis Rothman 
 ### PHASE 3 - Trial 2 on Real-World Data
 > Corresponding notebook:  [Trial2.ipynb](notebooks/Trial2.ipynb) </br>
 
