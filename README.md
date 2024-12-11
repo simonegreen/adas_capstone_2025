@@ -27,7 +27,18 @@ Implemented data exploration and cleaning tasks: </br>
 6. Save the cleaned and reduced dataset to a new CSV file
 ### PHASE 2 - Trial 1
 > Corresponding notebook:  [Trial1.ipynb](Trial1.ipynb)
-
+This trial was implemented on the ChatGPT Generated Dataset, with the following steps:
+1. Install and import necessary libraries
+2. Load the cleaned dataset into a pandas DataFrame
+3. Represent feature subsets using binary states
+4. Initialize the Q-Matrix for feature configurations (states) and clustering algorithms (actions).
+5. Set up the Bellman equation to update the matrix with rewards based on silhouette scores
+6. Execute clustering algorithms (KMeans, EM Clustering, DBSCAN, K-Medoids, and Mean Shift)
+7. Iterate 6000 times: select a state, run clustering, compute silhouette scores, and update the reward matrix
+8. Identify the state and algorithm with the highest reward value
+9. Apply the best state & action to cluster the data and assign cluster IDs
+10. Identify clusters with <10% of data as anomalous
+11. Extract and display IP addresses corresponding to the identified anomalous clusters
 ### PHASE 3 - Trial 2
 > Corresponding notebook:  [Trial2.ipynb](Trial2.ipynb)
 
