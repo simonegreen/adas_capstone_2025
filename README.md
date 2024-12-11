@@ -26,7 +26,8 @@ Implemented data exploration and cleaning tasks: </br>
    (Note: This step was added for Trial 2 and manual feature selection was used in Trial 1)
 6. Save the cleaned and reduced dataset to a new CSV file
 ### PHASE 2 - Trial 1
-> Corresponding notebook:  [Trial1.ipynb](Trial1.ipynb)
+> Corresponding notebook:  [Trial1.ipynb](Trial1.ipynb) </br>
+
 This trial was implemented on the ChatGPT Generated Dataset, with the following steps:
 1. Install and import necessary libraries
 2. Load the cleaned dataset into a pandas DataFrame
@@ -40,8 +41,13 @@ This trial was implemented on the ChatGPT Generated Dataset, with the following 
 10. Identify clusters with <10% of data as anomalous
 11. Extract and display IP addresses corresponding to the identified anomalous clusters
 ### PHASE 3 - Trial 2
-> Corresponding notebook:  [Trial2.ipynb](Trial2.ipynb)
+> Corresponding notebook:  [Trial2.ipynb](Trial2.ipynb) </br>
 
+This trial follows a similar process to Trial 1 with the following key differences:
+1. The input data was the Real-World Data from Aposemat IOT-23
+2. The features input were those chosen by the PCA automated feature selection in [data_prep.ipynb](data_prep.ipynb)
+3. The iterations were increased to 10000
+4. The output of the model produces a list of malicious events rather than IP addresses. These can be mapped back to the corresponding device in the raw dataset
 
 
 ### Results
