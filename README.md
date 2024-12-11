@@ -17,10 +17,9 @@ The dataset used in Trial 2 is: [CTU-IoT-Malware-Capture-21-1conn.log.labeled.cs
 The project is implemented in three distinct phases; one for the essential data preparation and two classification trials. <br/>
 - Each step is represented in a corresponding notebook inside [notebooks](notebooks).
 - Intermediary data files are stored inside the [data](data) path.
-- We utilized an adaptation of the Q-Learning code within *Artificial Intelligence By Example 2nd ed.* by Denis Rothman
 
 ### PHASE 1 - Initial Data Prep
-> Corresponding notebook:  [data_prep.ipynb](notebooks/data_prep.ipynb)
+> Corresponding notebook:  [data_prep.ipynb](notebooks/data_prep.ipynb) </br>
 
 Implemented data exploration and cleaning tasks: </br>
 1. Load the dataset into a Pandas DataFrame
@@ -31,7 +30,8 @@ Implemented data exploration and cleaning tasks: </br>
    (Note: This step was added for Trial 2 and manual feature selection was used in Trial 1)
 6. Save the cleaned and reduced dataset to a new CSV file </br>
    For Trial 1: [feature_selection_quantitative.csv](data/generated/processed/feature_selection_quantitative.csv) </br>
-   For Trial 2: [feature_selection_RW21.csv](data/real-world/processed/feature_selection_RW21.csv)
+   For Trial 2: [feature_selection_RW21.csv](data/real-world/processed/feature_selection_RW21.csv) </br> </br>
+Note: We utilized an adaptation of the Q-Learning code within *Artificial Intelligence By Example 2nd ed.* by Denis Rothman 
 ### PHASE 2 - Trial 1 on Generated Data
 > Corresponding notebook:  [Trial1.ipynb](notebooks/Trial1.ipynb) </br>
 
