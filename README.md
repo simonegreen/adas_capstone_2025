@@ -17,6 +17,7 @@ The dataset used in Trial 2 is: [CTU-IoT-Malware-Capture-21-1conn.log.labeled.cs
 The project is implemented in three distinct phases; one for the essential data preparation and two classification trials. <br/>
 - Each step is represented in a corresponding notebook inside [notebooks](notebooks).
 - Intermediary data files are stored inside the [data](data) path.
+- We utilized an adaptation of the Q-Learning code within *Artificial Intelligence By Example 2nd ed.* by Denis Rothman
 
 ### PHASE 1 - Initial Data Prep
 > Corresponding notebook:  [data_prep.ipynb](notebooks/data_prep.ipynb)
