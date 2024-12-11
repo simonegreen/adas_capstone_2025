@@ -49,9 +49,8 @@ This trial was implemented on the ChatGPT Generated Dataset, with the following 
 
 This trial follows a similar process to Trial 1 with the following key differences:
 1. The input data was the Real-World Data from Aposemat IOT-23
-2. The features input were those chosen by the PCA automated feature selection in [data_prep.ipynb](data_prep.ipynb)
-3. The iterations were increased to 10000
-4. The output of the model produces a list of malicious events rather than IP addresses. These can be mapped back to the corresponding device in the raw dataset
+2. Abstractions to accommodate variable components such as feature names, feature count, and matrix dimensions, enabling adaptability across different datasets
+4. The iterations were increased to 10000
 
 
 ### Results
