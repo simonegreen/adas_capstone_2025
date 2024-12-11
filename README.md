@@ -54,5 +54,3 @@ This trial follows a similar process to Trial 1 with the following key differenc
 2. Abstractions to accommodate variable components such as feature names, feature count, and matrix dimensions, enabling adaptability across different datasets
 4. The iterations were increased to 10000
 
-
-### Results
