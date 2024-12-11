@@ -1,7 +1,7 @@
 # Autonomous Data Scientist for Network Traffic Anomaly Detection
 This project aims to integrate unsupervised clustering algorithms,
 automated feature selection, and reinforcement learning into
-an autonomous agent in order to detect anomalous behavior in network traffic.
+an autonomous agent with the ability to detect anomalous behavior in network traffic.
 
 ## Data Sets
 ### ChatGPT Generated Data
