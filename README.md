@@ -26,7 +26,7 @@ Implemented data exploration and cleaning tasks: </br>
 4. Standardize numerical columns using StandardScaler to ensure consistent scaling.
 5. Apply PCA (Principal Component Analysis) to reduce dimensionality by selecting the most influential features </br>
    (Note: This step was added for Trial 2 and manual feature selection was used in Trial 1)
-6. Save the cleaned and reduced dataset to a new CSV file
+6. Save the cleaned and reduced dataset to a new CSV file </br>
    For Trial 1: [feature_selection_quantitative.csv](data/generated/processed/feature_selection_quantitative.csv) </br>
    For Trial 2: [feature_selection_RW21.csv](data/real-world/processed/feature_selection_RW21.csv)
 ### PHASE 2 - Trial 1
