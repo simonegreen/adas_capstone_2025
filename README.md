@@ -3,7 +3,7 @@ This project aims to integrate unsupervised clustering algorithms,
 automated feature selection, and reinforcement learning into
 an autonomous agent with the ability to detect anomalous behavior in network traffic.
 
-For a detailed abstract, team member roles, and a link to our document deliverables, please refer to the [Project Wiki}(wiki)
+For a detailed abstract, team member roles, and a link to our document deliverables, please refer to the [Project Wiki](wiki)
 
 ## Data Sets
 ### ChatGPT Generated Data
