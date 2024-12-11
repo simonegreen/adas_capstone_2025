@@ -17,7 +17,7 @@ The project is implemented in three distinct phases; one for the essential data 
 - Intermediary data files are stored inside the [data](data) path.
 
 ### PHASE 1 - Initial Data Prep
-> Corresponding notebook:  [data_prep.ipynb](data_prep.ipynb)
+> Corresponding notebook:  [data_prep.ipynb](notebooks/data_prep.ipynb)
 
 Implemented data exploration and cleaning tasks: </br>
 1. Load the dataset into a Pandas DataFrame
@@ -30,7 +30,7 @@ Implemented data exploration and cleaning tasks: </br>
    For Trial 1: [feature_selection_quantitative.csv](data/generated/processed/feature_selection_quantitative.csv) </br>
    For Trial 2: [feature_selection_RW21.csv](data/real-world/processed/feature_selection_RW21.csv)
 ### PHASE 2 - Trial 1
-> Corresponding notebook:  [Trial1.ipynb](Trial1.ipynb) </br>
+> Corresponding notebook:  [Trial1.ipynb](notebooks/Trial1.ipynb) </br>
 
 This trial was implemented on the ChatGPT Generated Dataset, with the following steps:
 1. Install and import necessary libraries
@@ -45,7 +45,7 @@ This trial was implemented on the ChatGPT Generated Dataset, with the following 
 10. Identify clusters with <10% of data as anomalous
 11. Extract and display IP addresses corresponding to the identified anomalous clusters
 ### PHASE 3 - Trial 2
-> Corresponding notebook:  [Trial2.ipynb](Trial2.ipynb) </br>
+> Corresponding notebook:  [Trial2.ipynb](notebooks/Trial2.ipynb) </br>
 
 This trial follows a similar process to Trial 1 with the following key differences:
 1. The input data was the Real-World Data from Aposemat IOT-23
