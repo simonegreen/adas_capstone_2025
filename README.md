@@ -26,10 +26,10 @@ Implemented data exploration and cleaning tasks: </br>
    (Note: This step was added for Trial 2 and manual feature selection was used in Trial 1)
 6. Save the cleaned and reduced dataset to a new CSV file
 ### PHASE 2 - Trial 1
-> Corresponding notebook:  [Trial1_GeneratedData.ipynb](Trial1.ipynb)
+> Corresponding notebook:  [Trial1.ipynb](Trial1.ipynb)
 
 ### PHASE 3 - Trial 2
-> Corresponding notebook:  [Trial2_RealWorldData.ipynb](Trial2.ipynb)
+> Corresponding notebook:  [Trial2.ipynb](Trial2.ipynb)
 
 
 
