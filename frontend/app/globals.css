@@ -4,6 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body { height: 100%; }
+
 /* Reusable “building blocks” */
 @layer components {
   .btn {
