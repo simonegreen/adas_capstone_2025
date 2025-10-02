@@ -1,22 +1,19 @@
-"use client"; 
-
-import Sidebar from "@/components/Sidebar";
-import Toolbelt from "@/components/Toolbelt";
-import ChatWindow from "@/components/ChatWindow";
-import MessageInput from "@/components/MessageInput";
+import TopBanner from "@/components/layout/TopBanner";
+import GuidelinesPanel from "@/components/chat/GuidelinesPanel";
+import UploadCard from "@/components/upload/UploadCard";
 
 export default function Page() {
   return (
-    // <main>Hello </main>
-    <main className="grid grid-cols-[300px_1fr] gap-6 p-6 bg-surface-soft min-h-screen">
-      <Sidebar />
-      <section className="flex flex-col gap-4">
-        <Toolbelt />
-        <div className="card min-h-[60vh]">
-          <ChatWindow />
+    <main className="min-h-screen bg-white p-6">
+      <div className="max-w-6xl mx-auto grid gap-6">
+        <TopBanner />
+
+        {/* 2-column content area */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <GuidelinesPanel />
+          <UploadCard />
         </div>
-        <MessageInput />
-      </section>
+      </div>
     </main>
   );
 }
