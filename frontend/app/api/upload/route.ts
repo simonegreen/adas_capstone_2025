@@ -1,38 +1,78 @@
+// app/api/upload/route.ts
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
 
 export const runtime = "nodejs";
+
+// Set your backend base URL in .env (Codespaces safe):
+// API_BASE_URL=http://localhost:8000
+// or something like https://your-backend.example.com
+const API_BASE_URL = process.env.API_BASE_URL ?? "http://localhost:8000";
 
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
     const file = form.get("file") as File | null;
-    const uidHeader = String(form.get("uidHeader") ?? "");
-    const tsHeader = String(form.get("tsHeader") ?? "");
 
     if (!file) {
-      return NextResponse.json({ ok: false, message: "No file received." }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, message: "No file received." },
+        { status: 400 }
+      );
     }
 
+    // Optional: size guard (FastAPI will also enforce its own limits)
+    // e.g., block > 200MB
+    const MAX_BYTES = 200 * 1024 * 1024;
+    if (typeof (file as any).size === "number" && (file as any).size > MAX_BYTES) {
+      return NextResponse.json(
+        { ok: false, message: "File too large." },
+        { status: 413 }
+      );
+    }
+
+    // Build multipart form-data for FastAPI
+    const backendForm = new FormData();
+
+    // FastAPI expects the field name "file"
     const arrayBuf = await file.arrayBuffer();
-    const buf = Buffer.from(arrayBuf);
-    const dest = path.join("/tmp", file.name);
-    await fs.writeFile(dest, buf);
+    const filename =
+      (file as any).name || "upload.csv"; // name isn't always present in edge cases
+    const blob = new Blob([arrayBuf], { type: file.type || "text/csv" });
+    backendForm.append("file", blob, filename);
 
-    let inferredHeaders: string[] | undefined;
-    if (file.type.includes("csv") || file.name.endsWith(".csv")) {
-      const firstChunk = buf.toString("utf8").split(/\r?\n/)[0] ?? "";
-      inferredHeaders = firstChunk.split(",").map(s => s.trim());
+    // If later your backend accepts headers like uidHeader/tsHeader, you can send them:
+    // const uidHeader = String(form.get("uidHeader") ?? "");
+    // const tsHeader  = String(form.get("tsHeader") ?? "");
+    // backendForm.append("uidHeader", uidHeader);
+    // backendForm.append("tsHeader", tsHeader);
+
+    const resp = await fetch(`${API_BASE_URL}/add_data/`, {
+      method: "POST",
+      body: backendForm, // DO NOT set content-type manually; fetch will set multipart boundary.
+    });
+
+    // Pass through FastAPI's response cleanly
+    const data = await resp.json().catch(() => ({}));
+
+    if (!resp.ok) {
+      const detail =
+        (data && (data.detail || data.message)) || "Upload failed upstream.";
+      return NextResponse.json(
+        { ok: false, message: detail },
+        { status: resp.status }
+      );
     }
 
-    // Friendly echo to help you debug integrations
-    const message = `Uploaded ${file.name}. UID header: "${uidHeader || "(not set)"}", Timestamp header: "${tsHeader || "(not set)"}".` +
-      (inferredHeaders?.length ? ` CSV headers detected: ${inferredHeaders.join(" | ")}` : "");
-
-    return NextResponse.json({ ok: true, message, inferredHeaders });
+    // FastAPI example returns: { status, rows, columns }
+    return NextResponse.json({
+      ok: true,
+      ...data,
+    });
   } catch (err) {
     console.error(err);
-    return NextResponse.json({ ok: false, message: "Server error while uploading." }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, message: "Server error while proxying upload." },
+      { status: 500 }
+    );
   }
 }
