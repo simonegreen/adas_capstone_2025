@@ -2,7 +2,7 @@
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
-from ..llm.client import client, MODEL
+from ..LLM.client import client, MODEL
 from ..models import InterpretIn, InterpretOut
 from ..backendInterface import backend_data
 
