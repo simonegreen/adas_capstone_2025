@@ -14,6 +14,9 @@ class TimeRangeExplicit(BaseModel):
         return v
 
 # Use underscores for presets to avoid whitespace mismatch
+# TODO: change the time Literals to mmddyyyy fomat
+# TODO: (later) add time range A, B (B is deafult to today) 
+
 TimePreset = Literal["past_day", "past_week", "past_month"]
 TimeRange = Union[TimePreset, TimeRangeExplicit]
 
@@ -31,11 +34,13 @@ class FindAnomaliesIn(BaseModel):
     top_n: conint(ge=1, le=100) = 10
     num_features: conint(ge=1, le=1024) = 10
 
+# NOTE: sort by score is suspended for now
 # ---- Our intent models (action + params) ----
 Explanation = Literal["none", "simple", "verbose"]
 SortBy = Literal["ip", "time", "quantity", "score"]
 Action = Literal["upload_data", "find_anomalies", "get_output", "rerun", "reset", "help"]
 
+# TODO: update num_features default to 10, top_n default to 10, and time_range default to today
 class IntentParams(BaseModel):
     top_n: Optional[conint(ge=1, le=100)] = None
     num_features: Optional[conint(ge=1, le=1024)] = None
