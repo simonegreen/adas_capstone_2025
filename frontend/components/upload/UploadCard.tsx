@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";   
 import FileDropzone from "./FileDropzone";
 
 type UploadResponse = { ok: boolean; status?: string; rows?: number; columns?: number; message?: string };
 
 export default function UploadCard() {
+  const router = useRouter();                   
   const [file, setFile] = useState<File | null>(null);
   const [uidHeader, setUidHeader] = useState("");
   const [tsHeader, setTsHeader] = useState("");
@@ -27,6 +29,11 @@ export default function UploadCard() {
       setServerMsg(
         data.ok ? `✅ Uploaded. Rows: ${data.rows ?? "?"}, Cols: ${data.columns ?? "?"}` : `❌ ${data.message}`
       );
+      
+      // 👇 if upload succeeded, go to the chat page
+      // if (data.ok) {
+      //   router.push("/chat");
+      // }
     } catch {
       setServerMsg("❌ Upload failed. Please try again.");
     } finally {
