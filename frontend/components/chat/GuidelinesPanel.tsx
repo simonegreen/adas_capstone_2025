@@ -1,3 +1,5 @@
+// old
+
 import Image from "next/image";
 // components/chat/GuidelinesPanel.tsx
 import { Actor } from "next/font/google";
