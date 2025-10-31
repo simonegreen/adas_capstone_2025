@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from reinforcementLearning import run_rl
+from backend.reinforcementLearning import run_rl
 
 
 backend_data = {"df": None,

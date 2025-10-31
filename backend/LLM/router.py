@@ -2,8 +2,8 @@
 import json
 from typing import Any, Dict
 
-from .client import client, MODEL
-from ..models import Intent
+from backend.LLM.client import client, MODEL
+from backend.models import Intent
 
 # Describe allowable actions & fields (for the prompt)
 ACTION_ENUM = ["upload_data", "find_anomalies", "get_output", "rerun", "reset", "help"]

@@ -2,11 +2,12 @@
 import json
 from fastapi import APIRouter, HTTPException
 from pydantic import ValidationError
-from ..LLM.client import client, MODEL
-from ..models import InterpretIn, InterpretOut
-from ..backendInterface import backend_data
+from backend.LLM.client import client, MODEL
+from backend.models import InterpretIn, InterpretOut
+from backend.backendInterface import backend_data
 
-router = APIRouter(tags=["interpret"])
+# router = APIRouter(tags=["interpret"])
+router = APIRouter(prefix="/api", tags=["interpret"])
 
 @router.post("/interpret", response_model=InterpretOut)
 async def api_interpret(body: InterpretIn) -> InterpretOut:

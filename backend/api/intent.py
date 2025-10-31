@@ -1,10 +1,10 @@
 # api/intent.py
 from fastapi import APIRouter, HTTPException
-from ..LLM.router import resolve_intent
-from ..models import Intent, FindAnomaliesIn
-from ..backendInterface import backend_data
-from ..backendInterface import find_anomalies as bi_find_anomalies
-from ..backendInterface import get_output as bi_get_output
+from backend.LLM.router import resolve_intent
+from backend.models import Intent, FindAnomaliesIn
+from backend.backendInterface import backend_data
+from backend.backendInterface import find_anomalies as bi_find_anomalies
+from backend.backendInterface import get_output as bi_get_output
 
 router = APIRouter(prefix="/api", tags=["intent"])
 
