@@ -17,6 +17,10 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData();
     const file = form.get("file") as File | null;
+    const uidHeader = (form.get("uidHeader") as string | null) || "";
+    const tsHeader = (form.get("tsHeader") as string | null) || "";
+    const sceIPHeader = (form.get("sceIPHeader") as string | null) || "";
+
 
     if (!file) {
       return NextResponse.json(
@@ -24,9 +28,16 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    // Ensure sceIPHeader is provided
+    if (!sceIPHeader.trim()) {
+      return NextResponse.json(
+        { ok: false, message: "No file received." },
+        { status: 400 }
+      );
+    }
 
     // Optional: size guard (FastAPI will also enforce its own limits)
-    // e.g., block > 200MB
+    // e.g., block > 5GB
     const MAX_BYTES = 5 * 1024 * 1024 * 1024;
     if (typeof (file as any).size === "number" && (file as any).size > MAX_BYTES) {
       return NextResponse.json(
@@ -44,15 +55,9 @@ export async function POST(req: Request) {
       (file as any).name || "upload.csv"; // name isn't always present in edge cases
     const blob = new Blob([arrayBuf], { type: file.type || "text/csv" });
     backendForm.append("file", blob, filename);
-
-    // If later your backend accepts headers like uidHeader/tsHeader/sceIPHeader, you can send them:
-    // const uidHeader = String(form.get("uidHeader") ?? "");
-    // const tsHeader  = String(form.get("tsHeader") ?? "");
-    // const sceIPHeader  = String(form.get("sceIPHeader") ?? "");
-
-    // backendForm.append("uidHeader", uidHeader);
-    // backendForm.append("tsHeader", tsHeader);
-    // backendForm.append("sceIPHeader", sceIPHeader);
+    backendForm.append("uidHeader", uidHeader);
+    backendForm.append("tsHeader", tsHeader);
+    backendForm.append("sceIPHeader", sceIPHeader);
 
 
     const resp = await fetch(`${API_BASE_URL}/add_data/`, {
@@ -60,7 +65,7 @@ export async function POST(req: Request) {
       body: backendForm, // DO NOT set content-type manually; fetch will set multipart boundary.
     });
 
-    // Pass through FastAPI's response cleanly
+    // Parse the backend response as JSON.
     const data = await resp.json().catch(() => ({}));
 
     if (!resp.ok) {

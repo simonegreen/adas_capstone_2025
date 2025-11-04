@@ -4,11 +4,11 @@ import TopBanner from "@/components/layout/TopBanner";
 import GuidelinesPanel from "@/components/chat/GuidelinesPanel";
 import UploadCard from "@/components/upload/UploadCard";
 
-import { useRouter } from 'next/navigation';
+// import { useRouter } from 'next/navigation';
 
 
 export default function Page() {
-  const router = useRouter();
+  // const router = useRouter();
 
   return (
     <main className="min-h-screen bg-white p-6">
@@ -20,7 +20,7 @@ export default function Page() {
           <GuidelinesPanel />
           <UploadCard />
         </div>
-              <button onClick={() => router.push('/chat')}>Go To Chat Page</button>
+              {/* <button onClick={() => router.push('/chat')}>Go To Chat Page</button> */}
       </div>
     </main>
   );

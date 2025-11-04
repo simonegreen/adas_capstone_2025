@@ -11,6 +11,7 @@ export default function UploadCard() {
   const [file, setFile] = useState<File | null>(null);
   const [uidHeader, setUidHeader] = useState("");
   const [tsHeader, setTsHeader] = useState("");
+  const [sceIPHeader, setSceIPHeader] = useState("");
   const [loading, setLoading] = useState(false);
   const [serverMsg, setServerMsg] = useState<string | null>(null);
 
@@ -18,12 +19,15 @@ export default function UploadCard() {
     e.preventDefault();
     setServerMsg(null);
     if (!file) return setServerMsg("Please select a CSV or ZIP file first.");
+    if (!sceIPHeader.trim()) return setServerMsg("Please provide the Source IP header (required).");
     setLoading(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
       fd.append("uidHeader", uidHeader);
       fd.append("tsHeader", tsHeader);
+      fd.append("sceIPHeader", sceIPHeader);
+
       const r = await fetch("/api/upload", { method: "POST", body: fd });
       const data = (await r.json()) as UploadResponse;
       setServerMsg(
@@ -31,9 +35,9 @@ export default function UploadCard() {
       );
       
       // 👇 if upload succeeded, go to the chat page
-      // if (data.ok) {
-      //   router.push("/chat");
-      // }
+      if (data.ok) {
+        router.push("/chat");
+      }
     } catch {
       setServerMsg("❌ Upload failed. Please try again.");
     } finally {
@@ -48,7 +52,7 @@ export default function UploadCard() {
       <div className="rounded-[18px] bg-white p-8 border border-gray-200 shadow-[0_4px_9px_rgba(23,26,31,0.19),0_0_2px_rgba(23,26,31,0.20)]">
         <h2 className="text-center text-3xl font-bold text-zinc-900">Dataset Upload</h2>
         <p className="mt-2 text-center text-gray-600">
-          Upload your CSV file and specify column headers for unique identifiers and timestamps.
+          Upload your CSV file and specify column headers for unique identifiers, timestamps, and sourceIP.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6">
@@ -59,8 +63,18 @@ export default function UploadCard() {
           </div>
 
           <div className="mt-6 space-y-4">
+              <div>
+                <label className="block text-xs text-zinc-900 mb-2">Source IP Column Header <span className="text-red-500">*</span></label>
+                <input
+                  className="w-full h-11 px-3 rounded-md border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-300"
+                  placeholder="e.g., src_ip, source_ip"
+                  value={sceIPHeader}
+                  onChange={(e) => setSceIPHeader(e.target.value)}
+                  required
+                />
+            </div>
             <div>
-              <label className="block text-xs text-zinc-900 mb-2">Unique Identifier Column Header</label>
+              <label className="block text-xs text-zinc-900 mb-2">Unique Identifier Column Header (optional)</label>
               <input
                 className="w-full h-11 px-3 rounded-md border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-300"
                 placeholder="e.g., customer_id, transaction_uuid"
@@ -69,7 +83,7 @@ export default function UploadCard() {
               />
             </div>
             <div>
-              <label className="block text-xs text-zinc-900 mb-2">Timestamp Column Header</label>
+              <label className="block text-xs text-zinc-900 mb-2">Timestamp Column Header (optional)</label>
               <input
                 className="w-full h-11 px-3 rounded-md border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-violet-300"
                 placeholder="e.g., event_timestamp, created_at"
@@ -77,12 +91,13 @@ export default function UploadCard() {
                 onChange={(e) => setTsHeader(e.target.value)}
               />
             </div>
+
           </div>
 
           <div className="mt-6 flex justify-end">
             <button
               type="submit"
-              disabled={loading || !file}
+              disabled={loading || !file || !sceIPHeader.trim()}
               className="min-w-[128px] h-10 px-4 rounded-md bg-[#5B21B6] text-white text-base disabled:opacity-50"
             >
               {loading ? "Uploading…" : "Submit"}
