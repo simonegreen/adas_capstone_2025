@@ -23,7 +23,7 @@ async def intent(message: str):
     3) Return normalized JSON to frontend
     """
     try:
-        parsed: Intent = resolve_intent(message)
+        parsed: Intent = resolve_intent(message) 
     except Exception:
         return {
             "ok": False,
@@ -45,8 +45,8 @@ async def intent(message: str):
     if act == "upload_data":
         return {
             "ok": True,
-            "message": "Upload your CSV to /add_data (POST). You may specify uid_column/time_range in UI.",
-            "params": p.model_dump()
+            "message": "Upload your CSV to /add_data (POST). You specified(?) sce_ip/uid_column/time_range in UI.",
+            "params": p.model_dump() # Retunn parsed params for UI prefill, dictionary format
         }
 
     if act == "find_anomalies":

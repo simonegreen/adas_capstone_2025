@@ -1,5 +1,5 @@
 // Right panel 
-
+import { ChatMessage } from "./ChatMessage";
 import { QueryCard } from "./QueryCard";
 import { ChatInput } from "./ChatInput";
 import { Actor } from "next/font/google";
@@ -7,7 +7,14 @@ const actor = Actor({ subsets: ["latin"], weight: "400" });
 
 import Image from "next/image";
 
+interface Message {
+  id: string;
+  type: "user" | "assistant";
+  content: string;
+}
+
 interface WelcomePanelProps {
+  messages: Message[];
   panelWidth: number;
   onQuerySelect: (text: string) => void;
   inputValue: string;
@@ -28,6 +35,8 @@ export function WelcomePanel({
   onInputChange,
   onInputSubmit,
 }: WelcomePanelProps) {
+
+
   return (
     <div
       style={{ width: `${panelWidth}%` }}

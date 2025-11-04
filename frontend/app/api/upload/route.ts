@@ -1,4 +1,9 @@
-// app/api/upload/route.ts
+// File: app/api/upload/route.ts
+// Purpose: API route to handle file uploads from frontend and proxy them to FastAPI backend.
+// Author: Aimee Liang
+// Created: 2025-10-15
+// Last Modified By: Aimee Liang (2025-11-3)
+
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -22,7 +27,7 @@ export async function POST(req: Request) {
 
     // Optional: size guard (FastAPI will also enforce its own limits)
     // e.g., block > 200MB
-    const MAX_BYTES = 200 * 1024 * 1024;
+    const MAX_BYTES = 5 * 1024 * 1024 * 1024;
     if (typeof (file as any).size === "number" && (file as any).size > MAX_BYTES) {
       return NextResponse.json(
         { ok: false, message: "File too large." },
@@ -40,11 +45,15 @@ export async function POST(req: Request) {
     const blob = new Blob([arrayBuf], { type: file.type || "text/csv" });
     backendForm.append("file", blob, filename);
 
-    // If later your backend accepts headers like uidHeader/tsHeader, you can send them:
+    // If later your backend accepts headers like uidHeader/tsHeader/sceIPHeader, you can send them:
     // const uidHeader = String(form.get("uidHeader") ?? "");
     // const tsHeader  = String(form.get("tsHeader") ?? "");
+    // const sceIPHeader  = String(form.get("sceIPHeader") ?? "");
+
     // backendForm.append("uidHeader", uidHeader);
     // backendForm.append("tsHeader", tsHeader);
+    // backendForm.append("sceIPHeader", sceIPHeader);
+
 
     const resp = await fetch(`${API_BASE_URL}/add_data/`, {
       method: "POST",
