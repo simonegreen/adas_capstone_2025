@@ -16,3 +16,5 @@ if __name__ == "__main__":
     show("get top 5 anomalies in the past week")
     show("rerun with 15 features")
     show("why is IP 10.0.0.7 anomalous? verbose explanation")
+    show("show me some anomalies")
+    show("give me a summary for last month")

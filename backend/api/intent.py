@@ -1,6 +1,6 @@
 # api/intent.py
 from fastapi import APIRouter, HTTPException
-from ..LLM.router import resolve_intent
+from ..llm.router import resolve_intent
 from ..models import Intent, FindAnomaliesIn
 from ..backendInterface import backend_data
 from ..backendInterface import find_anomalies as bi_find_anomalies
@@ -83,4 +83,5 @@ async def intent(message: str):
         return {"ok": True, "message": "State cleared."}
 
     return {"ok": False, "help": ["top 5 past_week", "rerun with 15 features", "why IP 10.0.0.7 verbose"]}
+
 
