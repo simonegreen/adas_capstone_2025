@@ -37,8 +37,8 @@ const defaultMessages: Message[] = [
 export default function Page() {
   const [messages, setMessages] = useState<Message[]>(defaultMessages);
   const [inputValue, setInputValue] = useState("");
-  const [leftPanelWidth, setLeftPanelWidth] = useState(50);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(50); // for draggable divider
+  const containerRef = useRef<HTMLDivElement>(null); // for draggable divider
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
