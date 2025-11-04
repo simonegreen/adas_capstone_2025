@@ -80,13 +80,13 @@ export default function Page() {
     if (!inputValue.trim()) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       type: "user",
       content: inputValue,
     };
 
     const assistantMessage: Message = {
-      id: (Date.now() + 1).toString(),
+      id: crypto.randomUUID(),
       type: "assistant",
       content:
         "I understand your query. I'm analyzing your dataset for anomalies based on your specifications.",
@@ -117,11 +117,12 @@ export default function Page() {
           <DraftLeft />
           {/* <DraggableDivider /> */}
           <WelcomePanel
-            panelWidth={leftPanelWidth + 60}
-            onQuerySelect={setInputValue}
-            inputValue={inputValue}
-            onInputChange={setInputValue}
+            // panelWidth={leftPanelWidth + 60}
+            messages={messages}            // ✅ required
+            inputValue={inputValue} // current text in input box
+            onInputChange={setInputValue} 
             onInputSubmit={handleSendMessage}
+            onQuerySelect={setInputValue}
           />
         </div>
       </div>
