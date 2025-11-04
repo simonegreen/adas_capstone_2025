@@ -50,12 +50,13 @@ export function DraftLeft({ panelWidth }: GuidelinesPanelProps) {
                   bg-white flex flex-col overflow-hidden transition-none`}
     >
       {/* Inline label sitting on white, not inside a box */}
-      <div className="px-6 py-4 border-b border-gray-200 bg-white flex-shrink-0">
+      {/* <div className="px-6 py-4 border-b border-gray-200 bg-white flex-shrink-0">
         <div className="text-gray-500 text-base">ADaS User Guidelines</div>
-      </div>
+      </div> */}
+      <div className="text-gray-500 text-base">ADaS User Guidelines</div>
 
-      {/* Scrollable messages column */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      {/* Scrollable messages column, commented belo fo consistency */}
+      {/* <div className="flex-1 overflow-y-auto p-6 space-y-4"> */} 
         {/* Message 1: ADaS (green) leading the convo */}
         <div className="flex items-start gap-3">
           <LeadIcon variant="adas" />
@@ -126,7 +127,7 @@ export function DraftLeft({ panelWidth }: GuidelinesPanelProps) {
             <p>Now, try it yourself—use the uploader on the right.</p>
           </Message>
         </div>
-      </div>
+      {/* </div> */}
     </div>
   );
 }

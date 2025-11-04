@@ -40,40 +40,40 @@ export default function Page() {
   const [leftPanelWidth, setLeftPanelWidth] = useState(50); // for draggable divider
   const containerRef = useRef<HTMLDivElement>(null); // for draggable divider
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
+  // useEffect(() => {
+  //   const handleMouseMove = (e: MouseEvent) => {
+  //     if (!containerRef.current) return;
 
-      const container = containerRef.current;
-      const rect = container.getBoundingClientRect();
-      const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+  //     const container = containerRef.current;
+  //     const rect = container.getBoundingClientRect();
+  //     const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
 
-      if (newWidth > 20 && newWidth < 80) {
-        setLeftPanelWidth(newWidth);
-      }
-    };
+  //     if (newWidth > 20 && newWidth < 80) {
+  //       setLeftPanelWidth(newWidth);
+  //     }
+  //   };
 
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
+  //   const handleMouseUp = () => {
+  //     document.removeEventListener("mousemove", handleMouseMove);
+  //     document.removeEventListener("mouseup", handleMouseUp);
+  //   };
 
-    const handleDividerMouseDown = () => {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-    };
+  //   const handleDividerMouseDown = () => {
+  //     document.addEventListener("mousemove", handleMouseMove);
+  //     document.addEventListener("mouseup", handleMouseUp);
+  //   };
 
-    const divider = containerRef.current?.querySelector('[data-divider]');
-    if (divider) {
-      divider.addEventListener("mousedown", handleDividerMouseDown);
-    }
+  //   const divider = containerRef.current?.querySelector('[data-divider]');
+  //   if (divider) {
+  //     divider.addEventListener("mousedown", handleDividerMouseDown);
+  //   }
 
-    return () => {
-      if (divider) {
-        divider.removeEventListener("mousedown", handleDividerMouseDown);
-      }
-    };
-  }, []);
+  //   return () => {
+  //     if (divider) {
+  //       divider.removeEventListener("mousedown", handleDividerMouseDown);
+  //     }
+  //   };
+  // }, []);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,9 +105,14 @@ export default function Page() {
     <main className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto grid gap-6">
         <TopBanner />
-
         {/* 2-column content area */}
-        <div ref={containerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div 
+          ref={containerRef} 
+          className="grid gap-6"
+          style={{
+            gridTemplateColumns: `minmax(0, ${leftPanelWidth}%) minmax(0, ${100 - leftPanelWidth}%)`,
+          }}
+        >
           {/* <QueryGuideline /> */}
           <DraftLeft />
           {/* <DraggableDivider /> */}
