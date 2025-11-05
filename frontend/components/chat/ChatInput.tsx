@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import { Send, Paperclip } from "lucide-react";
 
 interface ChatInputProps {
@@ -7,6 +10,11 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ value = "", onChange, onSubmit }: ChatInputProps) {
+  const router = useRouter();
+  const handleButtonClick = () => {
+    router.push("/");
+  };
+
   return (
     <div className="border-t border-gray-200 bg-gray-50 p-6 flex-shrink-0">
       <form onSubmit={onSubmit} className="flex gap-3">
@@ -22,6 +30,7 @@ export function ChatInput({ value = "", onChange, onSubmit }: ChatInputProps) {
         />
         <button
           type="button"
+          onClick={handleButtonClick}
           className="p-3 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <Paperclip size={18} className="text-gray-600" />
