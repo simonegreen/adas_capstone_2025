@@ -7,11 +7,16 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from reinforcementLearning import run_rl
+import requests
+import json
 
 
-backend_data = {"df": None,
+backend_data = {"df": pd.DataFrame,
                 "uid": None,
+                "time": None,
+                "source_ip": None,
                 "features": None,
+                "final_features": None,
                 "anomalies": None
                 } #the backend "memory"
 
@@ -19,8 +24,8 @@ backend_data = {"df": None,
 
 '''
 Summary: Takes in user-uploaded data, cleans it, and sets the global dataframe.
-Input:
-Output:
+Input: file (CSV file)
+Output: cleaned_df (Pandas DataFrame)
 '''
 def add_data(file):
     if not hasattr(file, "filename") or not file.filename.lower().endswith(".csv"):
@@ -59,12 +64,23 @@ Summary: Takes the user query, performs feature selection and RL. Updates all gl
 Input:
 Output:
 '''
-def find_anomalies(query, uid, num_feat):
-
-    ## FEATURE SELECTION
-    main_identifiers = [uid] # TODO: could later add option for additional headings to ignore, otherwise switch to just UID
-    backend_data["uid"] = uid
+def find_anomalies(query, uid, num_feat, time, source_ip):
+    ## VAR SETUP
     df = backend_data["df"]
+    if uid is None: 
+        uid = "uid"
+        df[uid] = df.index
+    backend_data["uid"] = uid
+    # TODO: if no time filtering is specified, time can remain None. only if the query contains time filtering, should we check
+    backend_data["time"] = time
+    if time is None and query["start"] is not None:
+        raise Exception("No time column specified.")
+    backend_data["source_ip"] = source_ip
+    if source_ip is None and query["target_ip"] is not None:
+        raise Exception("No IP column specified.")
+    main_identifiers = [uid, time, source_ip] # TODO: decide what to do with timestamp. if we don't want it to be a feature, add here
+    
+    ## FEATURE SELECTION
     num_entries = df.shape[0]
     drop = []
     for i in df:
@@ -74,7 +90,7 @@ def find_anomalies(query, uid, num_feat):
                 drop.append(i)
     # print(drop)
     cleaned_df = df.drop(columns = drop)
-    qual_to_quant(cleaned_df, main_identifiers[0])
+    #qual_to_quant(cleaned_df, uid)
     backend_data["df"] = cleaned_df
     # print("Final Columns:", str(cleaned_df.shape[1]))
     # print(cleaned_df.head())
@@ -85,6 +101,7 @@ def find_anomalies(query, uid, num_feat):
     ## REINFORCEMENT LEARNING
     anomalies, cluster_sizes, final_features = run_rl(backend_data) #TODO: others for output data
     backend_data["anomalies"] = anomalies
+    backend_data["final_features"] = final_features
     return anomalies
 
 '''Converts the qualitative column col in df to quantitative values'''
@@ -107,7 +124,7 @@ importance across all components
 '''
 def get_features(data, top_n, main_identifiers):
   copy = data.copy(deep=True)  # Make a copy of the original data to avoid modifying it
-  feat_options = copy.drop(columns=main_identifiers).copy(deep=True)  # Drop columns like unique IDs that shouldn't be scaled
+  feat_options = copy.drop(columns=[backend_data["uid"]]).copy(deep=True)  # Drop columns like unique IDs that shouldn't be scaled
 
   # Standardize the data
   scaler = StandardScaler()
@@ -150,5 +167,87 @@ Summary
 Input:
 Output:
 '''
-def get_output():
-    return("Returning results")
+def get_output(query):
+    format = {"top_n": query["top_n"], "time_range": (query['start'], query['end']), "target_ip": query["target_ip"], "explain": query["explanation"], "sortby": query["sort_by"]} #starts with defaults
+    output_data = backend_data["df"].copy(deep=True)
+    # TODO: front end should force defaults here if nothing is entered.
+    # TODO: top_n: select the top n IP addresses ONLY, do at end of all other formatting
+        # maybe default to -1 or None?
+    # time_range: filter based on start and end date. these will probably be integers
+    # TODO: include first seen and last seen for the IP addresses
+    # TODO: target_ip: look for this IP ONLY. start with this formatting, and return error if IP is not found
+        # default to None
+    # explain: ["none", "simple", "verbose"]
+    # TODO: sort: ["ip", "time", "quantity", "score"]
+
+    if backend_data["source_ip"] is None:
+        print("Outputting anomalies by UID only:")
+        if format["target_ip"] is not None:
+            raise Exception("No IP column specified.")
+    if backend_data["time"] is None and query["start"] is not None:
+        raise Exception("No time column specified.")
+    
+    # target ip - drop all but where IP is found
+    print(f"Outputing target IP {format["target_ip"]}")
+
+    # time range - drop all that have ts not within timerange
+    print(f"Outputing within time range {format["time_range"]}")
+    # TODO: drop where time < start and time > end
+
+    # top n - find top n IPs by quantity. only keep those
+    print(f"Outputing top {format["top_n"]} IPs")
+
+    # explanation
+    try:
+        ip_addresses = output_data['anomalies'][backend_data["source_ip"]]
+        vt_reports = VT_results(ip_addresses)
+    except:
+        vt_reports = "None Found"
+    match format["explain"]:
+        case None:
+            #print(format["explain"])
+            print("See anomalies below.")
+        case "none":
+            #print(format["explain"])
+            print("See anomalies below.")
+        case "simple":
+            #print(format["explain"])
+            print(f"The following features were used to detect vulnerabilities: {backend_data["final_features"]}")
+        case "verbose":
+            #print(format["explain"])
+            print(f"The following features were used to detect vulnerabilities: {backend_data["final_features"]}")
+            print("Virus Total IP Lookups:", vt_reports)
+
+    # sort - choose what column to sort by, default is by IP in desc quantity
+    #return output_data
+    return
+
+def VT_results(ips):
+    reports = {}
+    for i in ips:
+
+        url = f"https://www.virustotal.com/api/v3/ip_addresses/{i}"
+        headers = {
+            "accept": "application/json",
+            "x-apikey": "01410d4672179ea9b771121c8b8782d5e24190710598a532755234bf24fcf026"
+            }
+
+        
+        response = requests.get(url, headers=headers)
+        #print(type(response))
+        response_json = json.loads(response.text)
+        #print(type(response_json))
+
+        parsed_response = {"country": response_json["data"]["attributes"]["country"], "reputation": response_json["data"]["attributes"]["reputation"], "stats": response_json["data"]["attributes"]["last_analysis_stats"]}
+        #print(parsed_response)
+        reports[i] = parsed_response
+    #print(reports)
+    return reports
+
+
+# sample query
+# structure = {"top_n":None, "num_features":None, "start":None, "end": None, "target_ip":None, "explanation": None, "sort_by": None, "uid_column": None}
+
+# IP_error = {"top_n":None, "num_features":None, "start":None, "end": None, "target_ip":"1.2.3.4", "explanation": None, "sort_by": None, "uid_column": None}
+# time_error = {"top_n":None, "num_features":None, "start":1234, "end": None, "target_ip":None, "explanation": None, "sort_by": None, "uid_column": None}
+# structure = {"top_n":None, "num_features":None, "start":None, "end": None, "target_ip":None, "explanation": "verbose", "sort_by": None, "uid_column": None}
