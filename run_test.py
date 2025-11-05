@@ -2,7 +2,7 @@ import os, sys
 sys.path.insert(0, os.path.join(os.getcwd(), "backend"))
 from backend.backendInterface import add_data, find_anomalies, get_output
 
-data_path = "data/real-world/data-cleaning/cleaned_RW21.csv"
+data_path = "/root/adas_capstone_2025/data/real-world/data-cleaning/cleaned_RW21.csv"
 uid_col = "uid"
 
 add_data(data_path)
