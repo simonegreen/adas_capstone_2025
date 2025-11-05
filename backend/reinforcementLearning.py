@@ -308,7 +308,7 @@ def algorithm_prep(state, action, mode):
 # Copyright 2018 Denis Rothman MIT License. See LICENSE.
 import numpy as ql
 
-def RL(data):
+def RL(data, original_features_scaled):
 
     # R is The Reward Matrix for each state
     # 1024 configurations of the 10 features --> 2^10
