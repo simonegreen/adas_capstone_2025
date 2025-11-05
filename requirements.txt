@@ -1,0 +1,6 @@
+pandas==2.3.3
+numpy==2.3.4
+scipy==1.14.1
+scikit-learn==1.7.2
+scikit-learn-extra==0.3.1
+seaborn==0.13.2
