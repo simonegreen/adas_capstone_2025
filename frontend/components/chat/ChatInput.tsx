@@ -25,8 +25,7 @@ export function ChatInput({ value = "", onChange, onSubmit }: ChatInputProps) {
           placeholder="Message..."
           className="flex-1 px-4 py-3 bg-gray-100 rounded-lg border border-gray-200
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            text-gray-900 placeholder-gray-500
-            text-[16px] leading-[26px] font-normal"
+            text-gray-900 placeholder-gray-500 font-normal"
         />
         <button
           type="button"
