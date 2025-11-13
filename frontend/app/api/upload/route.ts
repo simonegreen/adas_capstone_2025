@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
     const resp = await fetch(`${API_BASE_URL}/add_data/`, {
       method: "POST",
-      body: backendForm, // DO NOT set content-type manually; fetch will set multipart boundary.
+      body: backendForm, 
     });
 
     // Parse the backend response as JSON.

@@ -118,7 +118,7 @@ export default function Page() {
           {/* <DraggableDivider /> */}
           <WelcomePanel
             // panelWidth={leftPanelWidth + 60}
-            messages={messages}            // ✅ required
+            messages={messages}            
             inputValue={inputValue} // current text in input box
             onInputChange={setInputValue} 
             onInputSubmit={handleSendMessage}
