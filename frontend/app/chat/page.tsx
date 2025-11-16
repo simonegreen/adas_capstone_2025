@@ -85,14 +85,14 @@ export default function Page() {
       content: inputValue,
     };
 
-    const assistantMessage: Message = {
-      id: crypto.randomUUID(),
-      type: "assistant",
-      content:
-        "I understand your query. I'm analyzing your dataset for anomalies based on your specifications.",
-    };
+    // const assistantMessage: Message = {
+    //   id: crypto.randomUUID(),
+    //   type: "assistant",
+    //   content:
+    //     "I understand your query. I'm analyzing your dataset for anomalies based on your specifications.",
+    // };
 
-    setMessages([...messages, userMessage, assistantMessage]);
+    setMessages([...messages, userMessage]);
     setInputValue("");
   };
 

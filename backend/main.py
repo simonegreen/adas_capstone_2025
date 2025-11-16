@@ -1,10 +1,10 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from backend.backendInterface import add_data, find_anomalies, get_output
+from backendInterface import add_data, find_anomalies, get_output
 from fastapi.middleware.cors import CORSMiddleware
 
 # Mount routers
-from backend.api.intent import router as intent_router
-from backend.api.interpret import router as interpret_router
+from .api.intent import router as intent_router
+from .api.interpret import router as interpret_router
 
 app = FastAPI()
 

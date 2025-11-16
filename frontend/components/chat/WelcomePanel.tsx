@@ -15,7 +15,7 @@ interface Message {
 
 interface WelcomePanelProps {
   messages: Message[];
-  panelWidth: number;
+  // panelWidth: number;
   onQuerySelect: (text: string) => void;
   inputValue: string;
   onInputChange: (value: string) => void;
@@ -30,7 +30,7 @@ const EXAMPLE_QUERIES = [
 
 export function WelcomePanel({
   messages,
-  panelWidth,
+  // panelWidth,
   onQuerySelect,
   inputValue,
   onInputChange,
