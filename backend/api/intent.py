@@ -15,11 +15,12 @@ def _to_table(maybe_df):
     except Exception:
         return maybe_df
 
+
 @router.post("/intent", response_model=dict)
 async def intent(message: str):
     """
-    1) Parse natural language with OpenAI → {action, params}
-    2) Dispatch to existing backend functions
+    1) Use LLM to parse natural language into {action, params}
+    2) Dispatch to backend functions
     3) Return normalized JSON to frontend
     """
     try:
@@ -29,10 +30,10 @@ async def intent(message: str):
             "ok": False,
             "error": "Unsupported query.",
             "hint": [
-                "upload CSV at /add_data then ask: 'top 5 past_week'",
+                "upload CSV at /add_data then ask: 'top 5 anomalies in the past week'",
                 "rerun with 15 features",
-                "why IP 10.0.0.7 verbose"
-            ]
+                "why is IP 10.0.0.7 anomalous? verbose explanation",
+            ],
         }
 
     act = parsed.action
@@ -52,36 +53,92 @@ async def intent(message: str):
     if act == "find_anomalies":
         payload = FindAnomaliesIn(
             uid_column=p.uid_column or (backend_data.get("uid") or "uid"),
-            time_range=p.time_range or "past_week",
-            top_n=p.top_n or 5,
+            time=p.time,  # TimeResolved or None
+            top_n=p.top_n or 10,
             num_features=p.num_features or 10,
         )
-        df = bi_find_anomalies(query=None, uid=payload.uid_column, num_feat=payload.num_features)
+
+        start = payload.time.start if payload.time else None
+        end   = payload.time.end   if payload.time else None
+
+        df = bi_find_anomalies(
+            query=None,
+            uid=payload.uid_column,
+            num_feat=payload.num_features,
+            start=start,
+            end=end,
+            source_ip=p.source_ip,   
+        )
+
         table = _to_table(df)
+
         return {
             "ok": True,
             "action": act,
             "result": {
                 "summary": f"Top {payload.top_n} anomalies with {payload.num_features} features",
-                "table": table[: payload.top_n] if isinstance(table, list) else table
-            }
+                "table": table[: payload.top_n] if isinstance(table, list) else table,
+                "time_used": payload.time.model_dump() if payload.time else None,
+                "source_ip": p.source_ip,
+            },
         }
 
     if act == "get_output":
-        res = bi_get_output()
-        return {"ok": True, "action": act, "result": res}
+        # TODO: the query dict has to be in the shape backendInterface.get_output expects
+        query = {
+            "top_n":       p.top_n or 10,
+            "num_features": p.num_features or 10,
+            "start":       p.time.start if p.time else None,
+            "end":         p.time.end   if p.time else None,
+            "target_ip":   p.target_ip,
+            "explanation": p.explanation or "verbose",
+            "sort_by":     p.sort_by,
+            "uid_column":  p.uid_column or (backend_data.get("uid") or "uid"),
+        }
+
+        res = bi_get_output(query)
+
+        # TODO: check again when backend function is done
+        return {
+            "ok": True,
+            "action": act,
+            "result": res,
+        }
+
 
     if act == "rerun":
         nf = p.num_features or 10
         uid = backend_data.get("uid") or "uid"
-        df = bi_find_anomalies(query=None, uid=uid, num_feat=nf)
-        return {"ok": True, "action": act,
-                "result": {"summary": f"Reran with num_features={nf}", "table": _to_table(df)}}
+        # TODO: the query dict has to be in the shape backendInterface.get_output expects
+        query = {
+            "top_n":       None,
+            "num_features": nf,
+            "start":       None,
+            "end":         None,
+            "target_ip":   None,
+            "explanation": None,
+            "sort_by":     None,
+            "uid_column":  uid,
+        }
 
-    if act == "reset":
-        backend_data.update({"df": None, "uid": None, "features": None, "anomalies": None})
-        return {"ok": True, "message": "State cleared."}
+        df = bi_find_anomalies(
+            query=query,
+            uid=uid,
+            num_feat=nf,
+            time=None,
+            source_ip=None,
+        )
 
-    return {"ok": False, "help": ["top 5 past_week", "rerun with 15 features", "why IP 10.0.0.7 verbose"]}
+        return {
+            "ok": True,
+            "action": act,
+            "result": {
+                "summary": f"Reran with num_features={nf}",
+                "table": _to_table(df),
+            },
+        }
+
+
+
 
 
