@@ -15,11 +15,12 @@ interface Message {
 
 interface WelcomePanelProps {
   messages: Message[];
-  // panelWidth: number;
+  panelWidth: number;
   onQuerySelect: (text: string) => void;
   inputValue: string;
   onInputChange: (value: string) => void;
   onInputSubmit: (e: React.FormEvent) => void;
+  isLoading?: boolean;
 }
 
 const EXAMPLE_QUERIES = [
@@ -30,11 +31,12 @@ const EXAMPLE_QUERIES = [
 
 export function WelcomePanel({
   messages,
-  // panelWidth,
+  panelWidth,
   onQuerySelect,
   inputValue,
   onInputChange,
   onInputSubmit,
+  isLoading = false,
 }: WelcomePanelProps) {
   // Check if user has started chatting
   const hasUserMessage = messages.some((m) => m.type === "user");
@@ -80,6 +82,14 @@ export function WelcomePanel({
           content={message.content}
         />
       ))}
+      {isLoading && (
+        <div className="flex gap-3">
+          <div className="w-12 h-12 flex-shrink-0 rounded-full bg-gradient-to-br from-teal-400 to-cyan-400 flex items-center justify-center text-white font-bold">
+            A
+          </div>
+          <div className="flex-1 text-gray-600 italic">Analyzing your dataset...</div>
+        </div>
+      )}
     </div>
   );
 
@@ -94,6 +104,7 @@ export function WelcomePanel({
         value={inputValue}
         onChange={onInputChange}
         onSubmit={onInputSubmit}
+        disabled={isLoading}
       />
     </div>
   );

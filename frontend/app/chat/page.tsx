@@ -37,6 +37,7 @@ const defaultMessages: Message[] = [
 export default function Page() {
   const [messages, setMessages] = useState<Message[]>(defaultMessages);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [leftPanelWidth, setLeftPanelWidth] = useState(50); // for draggable divider
   const containerRef = useRef<HTMLDivElement>(null); // for draggable divider
 
@@ -75,25 +76,63 @@ export default function Page() {
   //   };
   // }, []);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
+    const userText = inputValue.trim();
     const userMessage: Message = {
       id: crypto.randomUUID(),
       type: "user",
-      content: inputValue,
+      content: userText,
     };
 
-    // const assistantMessage: Message = {
-    //   id: crypto.randomUUID(),
-    //   type: "assistant",
-    //   content:
-    //     "I understand your query. I'm analyzing your dataset for anomalies based on your specifications.",
-    // };
-
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
+    setIsLoading(true);
+
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+      const resp = await fetch(`${API_BASE}/api/intent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText }),
+      });
+
+      const data = await resp.json().catch(() => ({}));
+
+      if (!resp.ok || !data.ok) {
+        const errorMsg = data?.error || data?.message || "Backend error";
+        const assistantMessage: Message = {
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: `Error: ${errorMsg}`,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        return;
+      }
+
+      // Success path
+      const summaryText = data.result?.summary || data.message || "Done";
+      console.log("anomalies table from backend:", data.result?.table);
+
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        type: "assistant",
+        content: summaryText,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (err: any) {
+      console.error("Error calling backend:", err);
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        type: "assistant",
+        content: "Network error: Could not reach the backend.",
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNewChat = () => {
@@ -117,12 +156,13 @@ export default function Page() {
           <DraftLeft />
           {/* <DraggableDivider /> */}
           <WelcomePanel
-            // panelWidth={leftPanelWidth + 60}
-            messages={messages}            
-            inputValue={inputValue} // current text in input box
-            onInputChange={setInputValue} 
+            messages={messages}
+            // panelWidth={100 - leftPanelWidth}
+            inputValue={inputValue}
+            onInputChange={setInputValue}
             onInputSubmit={handleSendMessage}
             onQuerySelect={setInputValue}
+            isLoading={isLoading}
           />
         </div>
       </div>

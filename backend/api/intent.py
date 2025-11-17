@@ -1,10 +1,14 @@
 # api/intent.py
 from fastapi import APIRouter, HTTPException
-from ..llm.router import resolve_intent
-from ..models import Intent, FindAnomaliesIn
-from ..backendInterface import backend_data
-from ..backendInterface import find_anomalies as bi_find_anomalies
-from ..backendInterface import get_output as bi_get_output
+from backend.LLM.router import resolve_intent
+from backend.models import Intent, FindAnomaliesIn
+from backend.backendInterface import backend_data
+from backend.backendInterface import find_anomalies as bi_find_anomalies
+from backend.backendInterface import get_output as bi_get_output
+from pydantic import BaseModel
+
+class IntentRequest(BaseModel):
+    message: str
 
 router = APIRouter(prefix="/api", tags=["intent"])
 
@@ -17,22 +21,15 @@ def _to_table(maybe_df):
 
 
 @router.post("/intent", response_model=dict)
-async def intent(message: str):
+async def intent(req: IntentRequest):
     """
     1) Use LLM to parse natural language into {action, params}
     2) Dispatch to backend functions
     3) Return normalized JSON to frontend
     """
-    # # NOTE: MAYBE DELETE LATER | Added checking empty message 
-    # message = message.strip()
-    
-    # if not message:
-    #     return {
-    #         "ok": False,
-    #         "error": "Empty message.",
-    #         "hint": ["Please type a query like 'Top 5 anomalies'"],
-    #     }
-    
+    # get message string from the JSON body
+    message = req.message.strip()
+
     try:
         parsed: Intent = resolve_intent(message)
     except Exception:
@@ -53,7 +50,7 @@ async def intent(message: str):
     if act in ("find_anomalies", "get_output", "rerun") and backend_data.get("df") is None:
         raise HTTPException(400, "No dataset loaded. Upload CSV at /add_data first.")
 
-    if act == "upload_data": # NOTE by Aimee: We don't need this here, we prompt user to upload data via the first page
+    if act == "upload_data": # NOTE by Aimee: We don't need this here, we prompt user to upload data via the first page 
         return {
             "ok": True,
             "message": "Upload your CSV to /add_data (POST). You may specify uid_column/time_range in UI.",
