@@ -1,0 +1,28 @@
+/* Reusable CSS */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; }
+
+/* Reusable “building blocks” */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 px-4 h-11 rounded-pill
+           text-[16px] leading-[26px] font-normal select-none;
+  }
+  .btn-primary {
+    @apply btn bg-brand-500 text-brand-fg hover:bg-brand-650 active:bg-brand-800 disabled:opacity-40;
+  }
+  .btn-ghost { @apply btn bg-surface text-text hover:bg-surface-soft; }
+
+  .icon-20 { @apply w-5 h-5; }
+
+  .card   { @apply bg-surface shadow-card rounded-2xl p-4; }
+  .bubble { @apply bg-surface rounded-2xl shadow-soft p-4; }
+  .sidebar{ @apply bg-surface-soft p-6 rounded-2xl; }
+
+  .input    { @apply w-full rounded-xl border border-surface-ring focus:ring-2 focus:ring-brand-500 focus:border-brand-500; }
+  .textarea { @apply input p-3 resize-y; }
+}

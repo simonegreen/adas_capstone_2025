@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
+<<<<<<< HEAD
 from backendInterface import add_data, find_anomalies, get_output
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -6,6 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.intent import router as intent_router
 from .api.interpret import router as interpret_router
 
+=======
+from backend.backendInterface import add_data, find_anomalies, get_output
+from fastapi.middleware.cors import CORSMiddleware
+
+# Mount routers
+from backend.api.intent import router as intent_router
+>>>>>>> frontend
 app = FastAPI()
 
 # Allow frontend to call API from a different origin/port
@@ -18,7 +26,11 @@ app.add_middleware(
 
 # LLM routes
 app.include_router(intent_router)
+<<<<<<< HEAD
 app.include_router(interpret_router)
+=======
+# app.include_router(interpret_router)
+>>>>>>> frontend
 
 # Original routes
 @app.post("/add_data/")

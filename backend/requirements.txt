@@ -1,0 +1,10 @@
+backend/requirements.txt
+------------------------
+fastapi
+uvicorn[standard]
+python-multipart
+pandas
+scikit-learn
+scikit-learn-extra
+openai>=1.40.0
+python-dotenv
