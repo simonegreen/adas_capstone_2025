@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from reinforcementLearning import run_rl
 import requests
 import json
+from dateutil.parser import parse
 
 
 backend_data = {"df": pd.DataFrame,
@@ -169,13 +170,13 @@ Output:
 '''
 def get_output(query):
     format = {"top_n": query["top_n"], "time_range": (query['start'], query['end']), "target_ip": query["target_ip"], "explain": query["explanation"], "sortby": query["sort_by"]} #starts with defaults
-    output_data = backend_data["df"].copy(deep=True)
+    output_data = backend_data["anomalies"].copy(deep=True)
     # TODO: front end should force defaults here if nothing is entered.
     # TODO: top_n: select the top n IP addresses ONLY, do at end of all other formatting
         # maybe default to -1 or None?
     # time_range: filter based on start and end date. these will probably be integers
     # TODO: include first seen and last seen for the IP addresses
-    # TODO: target_ip: look for this IP ONLY. start with this formatting, and return error if IP is not found
+    # target_ip: look for this IP ONLY. start with this formatting, and return error if IP is not found
         # default to None
     # explain: ["none", "simple", "verbose"]
     # TODO: sort: ["ip", "time", "quantity", "score"]
@@ -189,38 +190,51 @@ def get_output(query):
     
     # target ip - drop all but where IP is found
     print(f"Outputing target IP {format["target_ip"]}")
+    targeted_df = output_data[output_data[backend_data['source_ip']] == format["target_ip"]]
+    # TODO: check if df is empty; return error if so
+    if targeted_df is empty:
+        raise Exception("Target IP not found.")
 
     # time range - drop all that have ts not within timerange
     print(f"Outputing within time range {format["time_range"]}")
-    # TODO: drop where time < start and time > end
-
+    # drop where time < start and time > end
+    start, end = format['time_range']
+    # convert start, end, and time column to DT naive
+    start = parse(start).replace(tzinfo=None)
+    end = parse(end).replace(tzinfo=None)
+    targeted_df['datetime-parsed'] = targeted_df[backend_data['time']].apply(lambda x: parse(x).replace(tzinfo=None))
+    timefilter_df = targeted_df[[targeted_df['datetime-parsed'] >= start] & [targeted_df['datetime-parsed'] <= end]]
+    
     # top n - find top n IPs by quantity. only keep those
+
     print(f"Outputing top {format["top_n"]} IPs")
 
     # explanation
+    lookups = None
     try:
         ip_addresses = output_data['anomalies'][backend_data["source_ip"]]
         vt_reports = VT_results(ip_addresses)
     except:
-        vt_reports = "None Found"
+        vt_reports = [{i:"None Found"} for i in ip_addresses]
     match format["explain"]:
         case None:
             #print(format["explain"])
-            print("See anomalies below.")
+            explain = "See anomalies below."
         case "none":
             #print(format["explain"])
-            print("See anomalies below.")
+            explain = "See anomalies below."
         case "simple":
             #print(format["explain"])
-            print(f"The following features were used to detect vulnerabilities: {backend_data["final_features"]}")
+            explain = f"The following features were used to detect vulnerabilities: {backend_data["final_features"]}"
         case "verbose":
             #print(format["explain"])
-            print(f"The following features were used to detect vulnerabilities: {backend_data["final_features"]}")
-            print("Virus Total IP Lookups:", vt_reports)
+            explain = f"The following features were used to detect vulnerabilities: {backend_data["final_features"]} \n See VirusTotal IP reporting below:"
+            lookups = vt_reports
 
-    # sort - choose what column to sort by, default is by IP in desc quantity
+    # TODO: sort - choose what column to sort by, default is by IP in desc quantity
     #return output_data
-    return
+    if true:
+        return {'explain':explain, 'anomalies': output_data}
 
 def VT_results(ips):
     reports = {}

@@ -3,8 +3,8 @@ from backendInterface import add_data, find_anomalies, get_output
 from fastapi.middleware.cors import CORSMiddleware
 
 # Mount routers
-from .api.intent import router as intent_router
-from .api.interpret import router as interpret_router
+from api.intent import router as intent_router
+from api.interpret import router as interpret_router
 
 app = FastAPI()
 
@@ -36,19 +36,19 @@ async def api_add_data(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Error uploading file. Please try again")
 
 @app.get("/find_anomalies/")
-async def api_find_anomalies(query: str | None = None, uid: str | None = None, num_features: int | None = None):
+async def api_find_anomalies(query: dict | None = None, uid: str | None = None, num_features: int | None = None, ts: int | None = None, src_ip: str | None = None):
     """
     Legacy GET endpoint preserved for testing.
     If your backendInterface.find_anomalies requires (query, uid, num_feat), map them here.
     """
     try:
-        anomalies = find_anomalies(query=query, uid=uid or "uid", num_feat=num_features or 10)
+        anomalies = find_anomalies(query, uid, num_features, ts, src_ip)
         return anomalies.to_dict(orient="records")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/get_output/")
-async def api_get_output(query: str | None = None):
+async def api_get_output(query: dict | None = None):
     """
     Legacy GET endpoint preserved for testing.
     """
