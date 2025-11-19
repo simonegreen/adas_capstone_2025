@@ -10,6 +10,7 @@ from reinforcementLearning import run_rl
 import requests
 import json
 from dateutil.parser import parse
+from fastapi import HTTPException
 
 
 backend_data = {"df": pd.DataFrame,
@@ -29,8 +30,9 @@ Input: file (CSV file)
 Output: cleaned_df (Pandas DataFrame)
 '''
 def add_data(file):
-    if not hasattr(file, "filename") or not file.filename.lower().endswith(".csv"):
-        raise ValueError("Only CSV files are allowed")
+    # print(type(file))
+    # if not hasattr(file, "filename") or not file.filename.lower().endswith(".csv"):
+    #     raise ValueError("Only CSV files are allowed")
     
     raw_file = pd.read_csv(file.file if hasattr(file, "file") else file)
     cleaned_df = clean_data(raw_file)
@@ -62,7 +64,7 @@ def clean_data(df):
 
 '''
 Summary: Takes the user query, performs feature selection and RL. Updates all global data.
-Input:
+Input: 
 Output:
 '''
 def find_anomalies(query, uid, num_feat, time, source_ip):
@@ -75,10 +77,10 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
     # TODO: if no time filtering is specified, time can remain None. only if the query contains time filtering, should we check
     backend_data["time"] = time
     if time is None and query["start"] is not None:
-        raise Exception("No time column specified.")
+        raise HTTPException(status_code=400, detail="No time column specified.")
     backend_data["source_ip"] = source_ip
-    if source_ip is None and query["target_ip"] is not None:
-        raise Exception("No IP column specified.")
+    # if source_ip is None and query["target_ip"] is not None:
+    #     raise HTTPException(status_code=400, detail="No IP column specified.")
     main_identifiers = [uid, time, source_ip] # TODO: decide what to do with timestamp. if we don't want it to be a feature, add here
     
     ## FEATURE SELECTION
@@ -151,11 +153,11 @@ def get_features(data, top_n, main_identifiers):
   most_important_names = feat_options.columns[top]
 
   # Print the selected important features
-  print("Most Important Features:", most_important_names.tolist())
+  #print("Most Important Features:", most_important_names.tolist())
 
   # Return the unique top features
   unique_feats = np.unique(most_important_names)
-  print("Unique Features:", unique_feats.tolist())
+  #print("Unique Features:", unique_feats.tolist())
 
   # Return the selected unique features
   return pca, unique_feats
@@ -170,30 +172,25 @@ Output:
 '''
 def get_output(query):
     format = {"top_n": query["top_n"], "time_range": (query['start'], query['end']), "target_ip": query["target_ip"], "explain": query["explanation"], "sortby": query["sort_by"]} #starts with defaults
+    csv = backend_data['anomalies'].to_csv(compression={'method': 'gzip'})
     output_data = backend_data["anomalies"].copy(deep=True)
-    # TODO: front end should force defaults here if nothing is entered.
-    # TODO: top_n: select the top n IP addresses ONLY, do at end of all other formatting
+    # top_n: select the top n IP addresses ONLY, do at end of all other formatting
         # maybe default to -1 or None?
     # time_range: filter based on start and end date. these will probably be integers
-    # TODO: include first seen and last seen for the IP addresses
     # target_ip: look for this IP ONLY. start with this formatting, and return error if IP is not found
         # default to None
     # explain: ["none", "simple", "verbose"]
-    # TODO: sort: ["ip", "time", "quantity", "score"]
+    # ON HOLD: sort: ["ip", "time", "quantity", "score"]
 
-    if backend_data["source_ip"] is None:
-        print("Outputting anomalies by UID only:")
-        if format["target_ip"] is not None:
-            raise Exception("No IP column specified.")
     if backend_data["time"] is None and query["start"] is not None:
-        raise Exception("No time column specified.")
+        raise HTTPException(status_code=400, detail="No time column specified.")
     
     # target ip - drop all but where IP is found
-    print(f"Outputing target IP {format["target_ip"]}")
+    #print(f"Outputing target IP {format["target_ip"]}")
     targeted_df = output_data[output_data[backend_data['source_ip']] == format["target_ip"]]
-    # TODO: check if df is empty; return error if so
-    if targeted_df is empty:
-        raise Exception("Target IP not found.")
+    # check if df is empty; return error if so
+    if targeted_df.empty:
+        raise HTTPException(status_code=400, detail="Target IP not found.")
 
     # time range - drop all that have ts not within timerange
     print(f"Outputing within time range {format["time_range"]}")
@@ -206,13 +203,15 @@ def get_output(query):
     timefilter_df = targeted_df[[targeted_df['datetime-parsed'] >= start] & [targeted_df['datetime-parsed'] <= end]]
     
     # top n - find top n IPs by quantity. only keep those
-
-    print(f"Outputing top {format["top_n"]} IPs")
-
+    IP_count = timefilter_df[backend_data['source_ip']].value_counts()
+    top_n_values = IP_count.head(3)
+    topn_df = timefilter_df[timefilter_df[backend_data['source_ip']].isin(top_n_values)]
+    #print(f"Outputing top {format["top_n"]} IPs")
+    
     # explanation
     lookups = None
     try:
-        ip_addresses = output_data['anomalies'][backend_data["source_ip"]]
+        ip_addresses = topn_df[backend_data["source_ip"]]
         vt_reports = VT_results(ip_addresses)
     except:
         vt_reports = [{i:"None Found"} for i in ip_addresses]
@@ -231,10 +230,11 @@ def get_output(query):
             explain = f"The following features were used to detect vulnerabilities: {backend_data["final_features"]} \n See VirusTotal IP reporting below:"
             lookups = vt_reports
 
-    # TODO: sort - choose what column to sort by, default is by IP in desc quantity
+    # ON HOLD: sort - choose what column to sort by, default is by IP in desc quantity
     #return output_data
-    if true:
-        return {'explain':explain, 'anomalies': output_data}
+    output_data = topn_df.sort_values(by=backend_data['source_ip'])
+    
+    return {'explain':explain, 'vt_lookups': lookups, 'anomalies': output_data, 'csv': csv}
 
 def VT_results(ips):
     reports = {}
@@ -246,7 +246,6 @@ def VT_results(ips):
             "x-apikey": "01410d4672179ea9b771121c8b8782d5e24190710598a532755234bf24fcf026"
             }
 
-        
         response = requests.get(url, headers=headers)
         #print(type(response))
         response_json = json.loads(response.text)
