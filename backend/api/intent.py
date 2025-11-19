@@ -62,7 +62,7 @@ async def intent(req: IntentRequest):
     if act == "find_anomalies":
         payload = FindAnomaliesIn(
             uid_column=p.uid_column or (backend_data.get("uid") or "uid"),
-            time=p.time,  # TimeResolved or None
+            time=p.time,  #TODO change to timecolumn name 
             top_n=p.top_n or 10,
             num_features=p.num_features or 10,
         )
@@ -71,17 +71,17 @@ async def intent(req: IntentRequest):
         end   = payload.time.end   if payload.time else None
 
         df = bi_find_anomalies(
-            query=None,
+            query=None, 
             uid=payload.uid_column,
             num_feat=payload.num_features,
-            start=start,
-            end=end,
+            start=start, # 2025-01-01T00:00:00Z -- only need for get_output
+            end=end, # 2025-01-07T23:59:59Z
             source_ip=p.source_ip,   
         )
 
         table = _to_table(df)
 
-        return {
+        return { 
             "ok": True,
             "action": act,
             "result": {
