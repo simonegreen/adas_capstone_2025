@@ -618,7 +618,7 @@ def RL(data, original_features_scaled):
 '''
 
 '''
-'''
+
 def run_rl(backend_data):
     features = backend_data["features"]
     global FEATURES, ALGORITHMS, NUM_ALG, OG_FEATURES
@@ -639,35 +639,4 @@ def run_rl(backend_data):
     anomalies, cluster_sizes, final_features = RL(data, original_features_scaled)
     return anomalies, cluster_sizes, final_features
 
-'''
-import time
-
-def run_rl(backend_data):
-    start_time = time.time()
-    MAX_RUNTIME = 5 * 60  # 10 minutes
-
-    features = backend_data["features"]
-    global FEATURES, ALGORITHMS, NUM_ALG, OG_FEATURES
-    FEATURES = {k: str(v) for k, v in zip(range(len(features)), features)}
-    data = backend_data["df"]
-    ALGORITHMS = {0: 'DBSCAN Clustering', 1: 'Mean Shift', 2: 'K-Mediods', 3: 'EM Clustering', 4: 'K-Means'}
-    NUM_ALG = len(ALGORITHMS)
-    OG_FEATURES = data[features].copy(deep=True)
-
-    scaler = StandardScaler()
-    original_features_scaled = scaler.fit_transform(OG_FEATURES)
-
-    # TIMEOUT CHECK: run RL but abort after 10 minutes
-    if time.time() - start_time > MAX_RUNTIME:
-        print("Timeout hit before RL started.")
-        return [], [], []
-
-    result = RL(data, original_features_scaled)
-
-    # If RL runs too long, stop it after the call returns
-    if time.time() - start_time > MAX_RUNTIME:
-        print("Timeout hit during RL execution.")
-        return [], [], []
-
-    return result
 
