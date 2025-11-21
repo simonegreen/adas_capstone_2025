@@ -1,11 +1,13 @@
 # This contains the functions that the front end interface will have access to.
 # Only this module will be imported to main for API calls.
-
+from cuml.preprocessing import StandardScaler
+from cuml.decomposition import PCA
 # Imports
 import pandas as pd
 import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+#from sklearn.decomposition import PCA
+#from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 from reinforcementLearning import run_rl
 import requests
 import json
@@ -134,7 +136,8 @@ def get_features(data, top_n, main_identifiers):
   scaler.fit(feat_options)
   scaled_data = scaler.transform(feat_options)
 
-  pca = PCA(n_components=0.95) # should represent at least 95% of overall trends in data
+  #pca = PCA(n_components=0.95) # should represent at least 95% of overall trends in data
+  pca = PCA(n_components=5)
   pca.fit(scaled_data)
 
   ### USE ABSOLUTE VALUE OF LOADINGS ONLY FOR FEATURE IMPORTANCE 

@@ -2,20 +2,104 @@
 import seaborn as sb
 import pandas as pd
 import numpy as np
+
+from cuml.preprocessing import StandardScaler
+from cuml.cluster import KMeans, DBSCAN
+#from cuml.mixture import GaussianMixture
+from cuml.decomposition import PCA
+#from cuml.metrics import silhouette_score
+
+import seaborn as sb
+import pandas as pd
+import numpy as np
 from scipy.stats import multivariate_normal
-from sklearn.metrics import silhouette_score
-from sklearn.cluster import KMeans
-from sklearn.mixture import GaussianMixture
-from sklearn.cluster import DBSCAN
+#from sklearn.metrics import silhouette_score
 from sklearn_extra.cluster import KMedoids
 from sklearn.cluster import MeanShift, estimate_bandwidth
-from sklearn.preprocessing import StandardScaler
 import random
+
+
+#from scipy.stats import multivariate_normal
+#from sklearn.metrics import silhouette_score
+#from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
+#from sklearn.cluster import DBSCAN
+#from sklearn_extra.cluster import KMedoids
+#from sklearn.cluster import MeanShift, estimate_bandwidth
+#from sklearn.preprocessing import StandardScaler
+#import random
 
 OG_FEATURES = None
 ALGORITHMS = None
 NUM_ALG = None
 FEATURES = None
+
+
+import cupy as cp
+from cuml.metrics import pairwise_distances
+
+import cupy as cp
+
+def gpu_silhouette_score(X, labels):
+    # ---- Normalize X to a CuPy array ----
+    if hasattr(X, "to_cupy"):
+        X_cu = X.to_cupy()
+    elif hasattr(X, "values"):
+        X_cu = cp.asarray(X.values)
+    else:
+        X_cu = cp.asarray(X)
+
+    labels_cu = cp.asarray(labels).astype(cp.int32)
+
+    n = X_cu.shape[0]
+    if n <= 1:
+        return 0.0
+
+    # mapping -1 labels to a new cluster id
+    if (labels_cu == -1).any():
+        max_label = labels_cu.max()
+        labels_cu = cp.where(labels_cu == -1, max_label + 1, labels_cu)
+
+    # ---- Full pairwise distance matrix on GPU: D[i,j] = ||X[i] - X[j]||_2 ----
+    # shape: (n, n)
+    diff = X_cu[:, None, :] - X_cu[None, :, :]
+    D = cp.sqrt(cp.sum(diff * diff, axis=2))
+
+    # ---- Build cluster masks ----
+    clusters = cp.unique(labels_cu)
+    K = clusters.shape[0]
+
+    cluster_masks = [(labels_cu == c) for c in clusters]
+
+    # ---- a(i): mean intra-cluster distance ----
+    a = cp.zeros(n, dtype=cp.float32)
+
+    for mask in cluster_masks:
+        idx = cp.where(mask)[0]
+        if idx.size <= 1:
+            continue
+        # Distances within this cluster
+        dist_block = D[idx[:, None], idx[None, :]]
+        # Exclude self-distance (0 on diagonal) by dividing by (size - 1)
+        a[idx] = dist_block.sum(axis=1) / (idx.size - 1)
+
+    # ---- b(i): mean nearest-cluster distance ----
+    b = cp.full(n, cp.inf, dtype=cp.float32)
+
+    for mask in cluster_masks:
+        idx_c = cp.where(mask)[0]
+        if idx_c.size == 0:
+            continue
+        others = cp.where(~mask)[0]
+        if others.size == 0:
+            continue
+        dist_block = D[idx_c[:, None], others[None, :]]
+        mean_other = dist_block.mean(axis=1)
+        b[idx_c] = mean_other
+
+    # ---- Silhouette per point and global mean ----
+    s = (b - a) / cp.maximum(a, b)
+    return float(cp.nanmean(s))
 
 ##### ALGORITHMS #####
 """
@@ -53,7 +137,7 @@ def kmeans_clustering(selected_features,mode, n_clusters=2, max_iter=300):
     k_means.fit(X_scaled)
     if mode == 0:
         try:
-            silhouette_coef = silhouette_score(X_scaled, k_means.labels_)
+            silhouette_coef = gpu_silhouette_score(X_scaled, k_means.labels_)
         except ValueError:
             silhouette_coef = -1  # Assigning lowest score if clustering fails
         return silhouette_coef, k_means.labels_
@@ -96,7 +180,7 @@ def em_clustering(selected_features, mode, n_clusters=2):
         labels = em_model.predict(X_scaled)
         
         # Calculate silhouette score
-        silhouette_coef = silhouette_score(X_scaled, labels)
+        silhouette_coef = gpu_silhouette_score(X_scaled, labels)
     except Exception as e:
         #print(f"Clustering failed: {str(e)}")
         silhouette_coef = -1  # Assigning lowest score if clustering fails
@@ -148,7 +232,7 @@ def dbscan_clustering(selected_features, mode, eps=0.5, min_samples=5):
     
     # calculate silhouette score if more than one cluster and  noise points
     if n_clusters > 1:
-        silhouette_coef = silhouette_score(X_scaled, labels)
+        silhouette_coef = gpu_silhouette_score(X_scaled, labels)
     else:
         silhouette_coef = -1  # Assign lowest score if clustering fails
 
@@ -194,7 +278,7 @@ def kmedoids_clustering(selected_features, mode, n_clusters=2):
     try:
         labels = kmedoids.fit_predict(X_scaled)
         if len(set(labels)) > 1:
-            silhouette_coef = silhouette_score(X_scaled, labels)
+            silhouette_coef = gpu_silhouette_score(X_scaled, labels)
         else:
             silhouette_coef = -1 # Assigning lowest score if there is only 1 cluster
     except Exception as e:
@@ -237,7 +321,7 @@ def meanshift_clustering(selected_features, mode, quantile=0.3, n_samples=500):
         #n_clusters = len(np.unique(labels))
         #print(f"Number of clusters found: {n_clusters}")
         if n_clusters > 1:
-            silhouette_coef = silhouette_score(X_scaled, labels)
+            silhouette_coef = gpu_silhouette_score(X_scaled, labels)
         else:
             silhouette_coef = -1
     except Exception as e:
@@ -377,7 +461,7 @@ def RL(data, original_features_scaled):
         selected_silhouette_co, labels = algorithm_prep(current_state, action, 0)
         cluster_labels_matrix[current_state, action] = labels
         try:
-            overall_silhouette_co = silhouette_score(original_features_scaled, labels)
+            overall_silhouette_co = gpu_silhouette_score(original_features_scaled, labels)
         except ValueError: overall_silhouette_co = -1
 
         # calculate ratio of selected features 
