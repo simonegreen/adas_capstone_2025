@@ -137,7 +137,7 @@ def get_features(data, top_n, main_identifiers):
   scaled_data = scaler.transform(feat_options)
 
   #pca = PCA(n_components=0.95) # should represent at least 95% of overall trends in data
-  pca = PCA(n_components=5)
+  pca = PCA(n_components=10)
   pca.fit(scaled_data)
 
   ### USE ABSOLUTE VALUE OF LOADINGS ONLY FOR FEATURE IMPORTANCE 
