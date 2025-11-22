@@ -233,8 +233,12 @@ def get_output(query):
     # ON HOLD: sort - choose what column to sort by, default is by IP in desc quantity
     #return output_data
     output_data = topn_df.sort_values(by=backend_data['source_ip'])
-    
-    return {'explain':explain, 'vt_lookups': lookups, 'anomalies': output_data, 'csv': csv}
+    output_dict = {
+    'cols': output_data.columns.tolist(),
+    'rows': output_data.values.tolist()
+    }
+    # structure anomaly output data
+    return {'explain':explain, 'vt_lookups': lookups, 'anomalies': output_dict, 'csv': csv}
 
 def VT_results(ips):
     reports = {}
