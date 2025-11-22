@@ -54,10 +54,11 @@ async def api_get_output(query: dict | None = None):
     """
     try:
         output = get_output() if query is None else get_output()  # keep signature if your function ignores query
+        return output # output is a dictionary
         # If get_output returns a DataFrame:
-        try:
-            return output.to_dict(orient="records")
-        except Exception:
-            return {"result": output}
+        # try:
+        #     return output.to_dict(orient="records")
+        # except Exception:
+        #     return {"result": output}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
