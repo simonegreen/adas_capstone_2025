@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from reinforcementLearning import run_rl
+from backend.reinforcementLearning import run_rl
 import requests
 import json
 from dateutil.parser import parse
@@ -62,6 +62,40 @@ def clean_data(df):
 
 ###### FEATURE SELECTION & FIND ANOMALIES #####
 
+#############TESTING PURPOSES ONLY START #############
+
+def find_anomalies(query, uid, num_feat, start=None, end=None, source_ip=None):
+    """
+    Lightweight test implementation for verification.
+    Produces a predictable list of dicts and stores it in backend_data['anomalies'].
+    This avoids running the heavy RL pipeline during testing.
+    """
+
+    # Keep the uid in backend memory
+    backend_data["uid"] = uid
+
+    # Determine how many mock rows to produce (use num_feat as guidance)
+    n = min(10, max(1, int(num_feat or 5)))
+
+    mock_table = []
+    for i in range(n):
+        mock_table.append({
+            "uid": f"{uid or 'uid'}-{i+1}",
+            "score": round(1.0 - i * 0.05, 3),
+            "rank": i + 1,
+            "num_features": num_feat,
+            "start": str(start) if start else None,
+            "end": str(end) if end else None,
+            "source_ip": source_ip,
+            "note": "mocked result for testing"
+        })
+
+    # Save into backend memory so get_output() can return the same results
+    backend_data["anomalies"] = mock_table
+
+    return mock_table
+
+#############TESTING PURPOSES ONLY END #############
 '''
 Summary: Takes the user query, performs feature selection and RL. Updates all global data.
 Input: 
@@ -98,8 +132,8 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
     # print("Final Columns:", str(cleaned_df.shape[1]))
     # print(cleaned_df.head())
 
-    pca, features = get_features(cleaned_df, num_feat, main_identifiers)
-    backend_data["features"] = features
+#     pca, features = get_features(cleaned_df, num_feat, main_identifiers)
+#     backend_data["features"] = features
 
     ## REINFORCEMENT LEARNING
     anomalies, cluster_sizes, final_features = run_rl(backend_data) #TODO: others for output data
@@ -107,19 +141,19 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
     backend_data["final_features"] = final_features
     return anomalies
 
-'''Converts the qualitative column col in df to quantitative values'''
-def qual_to_quant(df, col):
-    le = LabelEncoder()
-    df[col] = le.fit_transform(df[col])
+# '''Converts the qualitative column col in df to quantitative values'''
+# def qual_to_quant(df, col):
+#     le = LabelEncoder()
+#     df[col] = le.fit_transform(df[col])
 
-"Returns an array with the indexes of the top n values in arr"
-def get_top_n_idx(n, arr):
-  arr = np.abs(arr)
-  top = np.argpartition(arr, -n)[-n:]
-  return top
+# "Returns an array with the indexes of the top n values in arr"
+# def get_top_n_idx(n, arr):
+#   arr = np.abs(arr)
+#   top = np.argpartition(arr, -n)[-n:]
+#   return top
 
-'''
-Returns a numpy array of the selected features from data using PCA.
+# '''
+# Returns a numpy array of the selected features from data using PCA.
 
 PCA: develops unspecified number of components to represent data
 Feature Selection: getting the top_n features that have the highest weighted
@@ -129,28 +163,28 @@ def get_features(data, top_n, main_identifiers):
   copy = data.copy(deep=True)  # Make a copy of the original data to avoid modifying it
   feat_options = copy.drop(columns=[backend_data["uid"]]).copy(deep=True)  # Drop columns like unique IDs that shouldn't be scaled
 
-  # Standardize the data
-  scaler = StandardScaler()
-  scaler.fit(feat_options)
-  scaled_data = scaler.transform(feat_options)
+#   # Standardize the data
+#   scaler = StandardScaler()
+#   scaler.fit(feat_options)
+#   scaled_data = scaler.transform(feat_options)
 
-  pca = PCA(n_components=0.95) # should represent at least 95% of overall trends in data
-  pca.fit(scaled_data)
+#   pca = PCA(n_components=0.95) # should represent at least 95% of overall trends in data
+#   pca.fit(scaled_data)
 
-  ### USE ABSOLUTE VALUE OF LOADINGS ONLY FOR FEATURE IMPORTANCE 
-  loadings = np.abs(pca.components_)  # Get importance for each feature in each component
-  # feature_importance = np.sum(loadings, axis=0)  # Sum the absolute loadings for each feature across all components
+#   ### USE ABSOLUTE VALUE OF LOADINGS ONLY FOR FEATURE IMPORTANCE 
+#   loadings = np.abs(pca.components_)  # Get importance for each feature in each component
+#   # feature_importance = np.sum(loadings, axis=0)  # Sum the absolute loadings for each feature across all components
 
-  ### USE WEIGHTED LOADINGS BY EXPLAINED VARIANCE FOR FEATURE IMPORTANCE
-  weighted_loadings = np.abs(pca.components_) * pca.explained_variance_ratio_.reshape(-1, 1)
-  feature_importance = np.sum(weighted_loadings, axis=0)
+#   ### USE WEIGHTED LOADINGS BY EXPLAINED VARIANCE FOR FEATURE IMPORTANCE
+#   weighted_loadings = np.abs(pca.components_) * pca.explained_variance_ratio_.reshape(-1, 1)
+#   feature_importance = np.sum(weighted_loadings, axis=0)
 
 
-  # Get the indexes of the top n most important features based on summed importance
-  top = get_top_n_idx(top_n, feature_importance)
+#   # Get the indexes of the top n most important features based on summed importance
+#   top = get_top_n_idx(top_n, feature_importance)
 
-  # Get the feature names for the most important features
-  most_important_names = feat_options.columns[top]
+#   # Get the feature names for the most important features
+#   most_important_names = feat_options.columns[top]
 
   # Print the selected important features
   #print("Most Important Features:", most_important_names.tolist())
@@ -159,8 +193,8 @@ def get_features(data, top_n, main_identifiers):
   unique_feats = np.unique(most_important_names)
   #print("Unique Features:", unique_feats.tolist())
 
-  # Return the selected unique features
-  return pca, unique_feats
+#   # Return the selected unique features
+#   return pca, unique_feats
 
 
 ##### GET OUTPUT #####

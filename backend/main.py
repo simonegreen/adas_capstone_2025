@@ -5,6 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 # Mount routers
 from api.intent import router as intent_router
 
+# Mount routers
+from backend.api.intent import router as intent_router
 app = FastAPI()
 
 # Allow frontend to call API from a different origin/port

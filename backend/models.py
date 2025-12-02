@@ -80,7 +80,7 @@ class IntentParams(BaseModel):
     num_features: Optional[conint(ge=1, le=1024)] = None
     time: Optional[TimeSpec] = None
     target_ip: Optional[str] = None
-    source_ip: Optional[str] = None   # TODO: source_ip as equied     # used as filter in find_anomalies
+    source_ip: Optional[str] = None          # used as filter in find_anomalies
     explanation: Optional[Explanation] = None
     sort_by: Optional[SortBy] = None
     uid_column: Optional[str] = None

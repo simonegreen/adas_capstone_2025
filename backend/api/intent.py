@@ -60,36 +60,32 @@ async def intent(req: IntentRequest):
     # ==================== FIND ANOMALIES ====================
 
     if act == "find_anomalies":
-        payload = FindAnomaliesIn(
-            uid_column=p.uid_column or (backend_data.get("uid") or "uid"),
-            time=p.time,  #TODO change to timecolumn name 
-            top_n=p.top_n or 10,
-            num_features=p.num_features or 10,
-        )
+        query = {
+            "top_n":       p.top_n or 10,
+            "num_features": p.num_features or 10,
+            "start":       p.time.start if p.time else None,
+            "end":         p.time.end   if p.time else None,
+            "target_ip":   p.target_ip,
+            "explanation": p.explanation,
+            "sort_by":     None,
+            "uid_column":  p.uid_column or (backend_data.get("uid") or "uid"),
+        }
 
-        start = payload.time.start if payload.time else None
-        end   = payload.time.end   if payload.time else None
-
+        #    NOTE: `time` here is the time column name in the dataset, not the time range
         df = bi_find_anomalies(
-            query=None, 
-            uid=payload.uid_column,
-            num_feat=payload.num_features,
-            start=start, # 2025-01-01T00:00:00Z -- only need for get_output
-            end=end, # 2025-01-07T23:59:59Z
-            source_ip=p.source_ip,   
+            query=query,
+            uid=query["uid_column"],
+            num_feat=query["num_features"],
+            time=backend_data.get("time"), 
+            source_ip=p.source_ip,
         )
 
-        table = _to_table(df)
+        res = bi_get_output(query)
 
-        return { 
+        return {
             "ok": True,
             "action": act,
-            "result": {
-                "summary": f"Top {payload.top_n} anomalies with {payload.num_features} features",
-                "table": table[: payload.top_n] if isinstance(table, list) else table,
-                "time_used": payload.time.model_dump() if payload.time else None,
-                "source_ip": p.source_ip,
-            },
+            "result": res,
         }
 
     # ==================== GET OUTPUT ====================
@@ -101,8 +97,8 @@ async def intent(req: IntentRequest):
             "start":       p.time.start if p.time else None,
             "end":         p.time.end   if p.time else None,
             "target_ip":   p.target_ip,
-            "explanation": p.explanation or "verbose",
-            "sort_by":     p.sort_by,
+            "explanation": p.explanation,
+            "sort_by":     None,
             "uid_column":  p.uid_column or (backend_data.get("uid") or "uid"),
         }
 
