@@ -135,10 +135,10 @@ export default function Page() {
     }
   };
 
-  const handleNewChat = () => {
-    setMessages(defaultMessages);
-    setInputValue("");
-  };
+  // const handleNewChat = () => {
+  //   setMessages(defaultMessages);
+  //   setInputValue("");
+  // };
   
   return (
     <main className="min-h-screen bg-white p-6">
