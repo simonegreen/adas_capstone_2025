@@ -14,6 +14,23 @@ interface Message {
   content: string;
 }
 
+interface BackendResult {
+  explain?: string;
+  vt_lookups?: Record<string, any> | null;
+  anomalies?: { cols: string[]; rows: any[][] } | null;
+  csv?: string | null;
+  [k: string]: any;
+}
+
+interface BackendResponse {
+  ok: boolean;
+  action?: string;
+  result?: BackendResult;
+  message?: string;
+  error?: string;
+  [k: string]: any;
+}
+
 const defaultMessages: Message[] = [
   {
     id: "1",
@@ -41,41 +58,6 @@ export default function Page() {
   const [leftPanelWidth, setLeftPanelWidth] = useState(50); // for draggable divider
   const containerRef = useRef<HTMLDivElement>(null); // for draggable divider
 
-  // useEffect(() => {
-  //   const handleMouseMove = (e: MouseEvent) => {
-  //     if (!containerRef.current) return;
-
-  //     const container = containerRef.current;
-  //     const rect = container.getBoundingClientRect();
-  //     const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
-
-  //     if (newWidth > 20 && newWidth < 80) {
-  //       setLeftPanelWidth(newWidth);
-  //     }
-  //   };
-
-  //   const handleMouseUp = () => {
-  //     document.removeEventListener("mousemove", handleMouseMove);
-  //     document.removeEventListener("mouseup", handleMouseUp);
-  //   };
-
-  //   const handleDividerMouseDown = () => {
-  //     document.addEventListener("mousemove", handleMouseMove);
-  //     document.addEventListener("mouseup", handleMouseUp);
-  //   };
-
-  //   const divider = containerRef.current?.querySelector('[data-divider]');
-  //   if (divider) {
-  //     divider.addEventListener("mousedown", handleDividerMouseDown);
-  //   }
-
-  //   return () => {
-  //     if (divider) {
-  //       divider.removeEventListener("mousedown", handleDividerMouseDown);
-  //     }
-  //   };
-  // }, []);
-
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
@@ -99,7 +81,15 @@ export default function Page() {
         body: JSON.stringify({ message: userText }),
       });
 
-      const data = await resp.json().catch(() => ({}));
+      const data: BackendResponse = await resp.json().catch(() => ({} as BackendResponse));
+
+      // Debug logging (temporary)
+      console.log("Full backend data:", data);
+      console.log("Result:", data.result);
+      console.log("Explain:", data.result?.explain);
+      console.log("VT lookups:", data.result?.vt_lookups);
+      console.log("Anomalies:", data.result?.anomalies);
+      console.log("CSV:", data.result?.csv);
 
       if (!resp.ok || !data.ok) {
         const errorMsg = data?.error || data?.message || "Backend error";
@@ -112,16 +102,68 @@ export default function Page() {
         return;
       }
 
-      // Success path
-      const summaryText = data.result?.summary || data.message || "Done";
-      console.log("anomalies table from backend:", data.result?.table);
+      // Success path: expand result into multiple assistant messages
+      const result = data.result as BackendResult | undefined;
 
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        type: "assistant",
-        content: summaryText,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      const newMessages: Message[] = [];
+
+      if (result?.explain) {
+        newMessages.push({
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: `Explanation:\n${result.explain}`,
+        });
+      }
+
+      if (result?.vt_lookups && Object.keys(result.vt_lookups).length > 0) {
+        newMessages.push({
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: `Lookups:\n${JSON.stringify(result.vt_lookups, null, 2)}`,
+        });
+      }
+
+      if (result?.anomalies) {
+        // If anomalies contains cols/rows - format as a small CSV/text table for readability
+        const an = result.anomalies as { cols: string[]; rows: any[][] };
+        if (an.cols && an.rows) {
+          const header = an.cols.join(" | ");
+          const rowsPreview = an.rows.slice(0, 10).map((r) => r.map((c) => String(c)).join(" | ")).join("\n");
+          const tableText = `${header}\n${rowsPreview}${an.rows.length > 10 ? `\n...and ${an.rows.length - 10} more rows` : ""}`;
+          newMessages.push({
+            id: crypto.randomUUID(),
+            type: "assistant",
+            content: `Anomalies (table preview):\n${tableText}`,
+          });
+        } else {
+          newMessages.push({
+            id: crypto.randomUUID(),
+            type: "assistant",
+            content: `Anomalies:\n${JSON.stringify(result.anomalies, null, 2)}`,
+          });
+        }
+      }
+
+      if (result?.csv) {
+        const csvPreview = typeof result.csv === "string" ? result.csv.slice(0, 200) : JSON.stringify(result.csv, null, 2);
+        newMessages.push({
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: `CSV preview:\n${csvPreview}${typeof result.csv === "string" && result.csv.length > 200 ? "\n... (truncated)" : ""}`,
+        });
+      }
+
+      // If nothing was produced above, fall back to a simple message
+      if (newMessages.length === 0) {
+        const fallback = data.message || "Done";
+        newMessages.push({
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: fallback,
+        });
+      }
+
+      setMessages((prev) => [...prev, ...newMessages]);
     } catch (err: any) {
       console.error("Error calling backend:", err);
       const assistantMessage: Message = {
@@ -135,26 +177,19 @@ export default function Page() {
     }
   };
 
-  // const handleNewChat = () => {
-  //   setMessages(defaultMessages);
-  //   setInputValue("");
-  // };
-  
   return (
     <main className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto grid gap-6">
         <TopBanner />
         {/* 2-column content area */}
-        <div 
-          ref={containerRef} 
+        <div
+          ref={containerRef}
           className="grid gap-6"
           style={{
             gridTemplateColumns: `minmax(0, ${leftPanelWidth}%) minmax(0, ${100 - leftPanelWidth}%)`,
           }}
         >
-          {/* <QueryGuideline /> */}
           <DraftLeft />
-          {/* <DraggableDivider /> */}
           <WelcomePanel
             messages={messages}
             // panelWidth={100 - leftPanelWidth}

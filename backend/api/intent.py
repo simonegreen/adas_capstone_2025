@@ -6,6 +6,8 @@ from backend.backendInterface import backend_data
 from backend.backendInterface import find_anomalies as bi_find_anomalies
 from backend.backendInterface import get_output as bi_get_output
 from pydantic import BaseModel
+import logging, traceback
+logging.basicConfig(level=logging.INFO)
 
 class IntentRequest(BaseModel):
     message: str
@@ -27,124 +29,129 @@ async def intent(req: IntentRequest):
     2) Dispatch to backend functions
     3) Return normalized JSON to frontend
     """
-    # get message string from the JSON body
-    message = req.message.strip()
-
     try:
-        parsed: Intent = resolve_intent(message)
-    except Exception:
-        return {
-            "ok": False,
-            "error": "Unsupported query.",
-            "hint": [
-                "upload CSV at /add_data then ask: 'top 5 anomalies in the past week'",
-                "rerun with 15 features",
-                "why is IP 10.0.0.7 anomalous? verbose explanation",
-            ],
-        }
+        # get message string from the JSON body
+        message = req.message.strip()
 
-    act = parsed.action
-    p = parsed.params
+        try:
+            parsed: Intent = resolve_intent(message)
+        except Exception:
+            return {
+                "ok": False,
+                "error": "Unsupported query.",
+                "hint": [
+                    "upload CSV at /add_data then ask: 'top 5 anomalies in the past week'",
+                    "rerun with 15 features",
+                    "why is IP 10.0.0.7 anomalous? verbose explanation",
+                ],
+            }
 
-    # Require data for actions that operate on a dataset
-    if act in ("find_anomalies", "get_output", "rerun") and backend_data.get("df") is None:
-        raise HTTPException(400, "No dataset loaded. Upload CSV at /add_data first.")
+        act = parsed.action
+        p = parsed.params
 
-    if act == "upload_data": # NOTE by Aimee: We don't need this here, we prompt user to upload data via the first page 
-        return {
-            "ok": True,
-            "message": "Upload your CSV to /add_data (POST). You may specify uid_column/time_range in UI.",
-            "params": p.model_dump()
-        }
-   
-    # ==================== FIND ANOMALIES ====================
+        # Require data for actions that operate on a dataset
+        if act in ("find_anomalies", "get_output", "rerun") and backend_data.get("df") is None:
+            raise HTTPException(400, "No dataset loaded. Upload CSV at /add_data first.")
 
-    if act == "find_anomalies":
-        query = {
-            "top_n":       p.top_n or 10,
-            "num_features": p.num_features or 10,
-            "start":       p.time.start if p.time else None,
-            "end":         p.time.end   if p.time else None,
-            "target_ip":   p.target_ip,
-            "explanation": p.explanation,
-            "sort_by":     None,
-            "uid_column":  p.uid_column or (backend_data.get("uid") or "uid"),
-        }
+        if act == "upload_data": # NOTE by Aimee: We don't need this here, we prompt user to upload data via the first page 
+            return {
+                "ok": True,
+                "message": "Upload your CSV to /add_data (POST). You may specify uid_column/time_range in UI.",
+                "params": p.model_dump()
+            }
+    
+        # ==================== FIND ANOMALIES ====================
 
-        #    NOTE: `time` here is the time column name in the dataset, not the time range
-        df = bi_find_anomalies(
-            query=query,
-            uid=query["uid_column"],
-            num_feat=query["num_features"],
-            time=backend_data.get("time"), 
-            source_ip=p.source_ip,
-        )
-
-        res = bi_get_output(query)
-
-        return {
-            "ok": True,
-            "action": act,
-            "result": res,
-        }
-
-    # ==================== GET OUTPUT ====================
-    if act == "get_output":
-        # TODO: the query dict has to be in the shape backendInterface.get_output expects
-        query = {
-            "top_n":       p.top_n or 10,
-            "num_features": p.num_features or 10,
-            "start":       p.time.start if p.time else None,
-            "end":         p.time.end   if p.time else None,
-            "target_ip":   p.target_ip,
-            "explanation": p.explanation,
-            "sort_by":     None,
-            "uid_column":  p.uid_column or (backend_data.get("uid") or "uid"),
-        }
-
-        res = bi_get_output(query)
-
-        # TODO: check again when backend function is done
-        return {
-            "ok": True,
-            "action": act,
-            "result": res,
-        }
-
-    # ==================== RERUN ====================
-    if act == "rerun":
-        nf = p.num_features or 10
-        uid = backend_data.get("uid") or "uid"
-        # TODO: the query dict has to be in the shape backendInterface.get_output expects
-        query = {
-            "top_n":       None,
-            "num_features": nf,
-            "start":       None,
-            "end":         None,
-            "target_ip":   None,
-            "explanation": None,
-            "sort_by":     None,
-            "uid_column":  uid,
-        }
-
-        df = bi_find_anomalies(
-            query=query,
-            uid=uid,
-            num_feat=nf,
-            time=None,
-            source_ip=None,
-        )
-
-        return {
-            "ok": True,
-            "action": act,
-            "result": {
-                "summary": f"Reran with num_features={nf}",
-                "table": _to_table(df),
-            },
-        }
+        if act == "find_anomalies":
+            query = {
+                "top_n":       p.top_n or 10,
+                "num_features": p.num_features or 10,
+                "start":       p.time.start if p.time else None,
+                "end":         p.time.end   if p.time else None,
+                "target_ip":   p.target_ip,
+                "explanation": p.explanation,
+                "sort_by":     None,
+                "uid_column":  p.uid_column or (backend_data.get("uid") or "uid"),
+            }
 
 
+            #    NOTE: `time` here is the time column name in the dataset, not the time range
+            df = bi_find_anomalies(
+                query=query,
+                uid=query["uid_column"],
+                num_feat=query["num_features"],
+                time=backend_data.get("time"), 
+                # source_ip=p.source_ip,
+                source_ip=backend_data.get("source_ip"),
+            )
+
+            res = bi_get_output(query)
+
+            return {
+                "ok": True,
+                "action": act,
+                "result": res,
+            }
+
+        # ==================== GET OUTPUT ====================
+        if act == "get_output":
+            # TODO: the query dict has to be in the shape backendInterface.get_output expects
+            query = {
+                "top_n":       p.top_n or 10,
+                "num_features": p.num_features or 10,
+                "start":       p.time.start if p.time else None,
+                "end":         p.time.end   if p.time else None,
+                "target_ip":   p.target_ip,
+                "explanation": p.explanation,
+                "sort_by":     None,
+                "uid_column":  p.uid_column or (backend_data.get("uid") or "uid"),
+            }
+
+            res = bi_get_output(query)
+
+            # TODO: check again when backend function is done
+            return {
+                "ok": True,
+                "action": act,
+                "result": res,
+            }
+
+        # ==================== RERUN ====================
+        if act == "rerun":
+            nf = p.num_features or 10
+            uid = backend_data.get("uid") or "uid"
+            # TODO: the query dict has to be in the shape backendInterface.get_output expects
+            query = {
+                "top_n":       None,
+                "num_features": nf,
+                "start":       None,
+                "end":         None,
+                "target_ip":   None,
+                "explanation": None,
+                "sort_by":     None,
+                "uid_column":  uid,
+            }
+
+            df = bi_find_anomalies(
+                query=query,
+                uid=uid,
+                num_feat=nf,
+                time=None,
+                source_ip=None,
+            )
+
+            return {
+                "ok": True,
+                "action": act,
+                "result": {
+                    "summary": f"Reran with num_features={nf}",
+                    "table": _to_table(df),
+                },
+            }
+    except Exception as e:
+        logging.exception("Unhandled error in /api/intent")
+        tb = traceback.format_exc()
+        return {"ok": False, "error": "Internal error", "detail": str(e), "traceback": tb}
 
 
 

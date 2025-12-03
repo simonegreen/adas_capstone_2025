@@ -6,11 +6,12 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from reinforcementLearning import run_rl
+from backend.reinforcementLearning import run_rl
 import requests
 import json
 from dateutil.parser import parse
 from fastapi import HTTPException
+import logging
 
 
 backend_data = {"df": pd.DataFrame,
@@ -37,6 +38,7 @@ def add_data(file):
     raw_file = pd.read_csv(file.file if hasattr(file, "file") else file)
     cleaned_df = clean_data(raw_file)
     backend_data["df"] = cleaned_df
+
     return cleaned_df
 
 def clean_data(df):
@@ -70,6 +72,32 @@ Output:
 def find_anomalies(query, uid, num_feat, time, source_ip):
     ## VAR SETUP
     df = backend_data["df"]
+    # print("Data shape:", df.shape)    
+    # print("num_feat:", num_feat)
+    # print("uid:", uid)
+    # print("time:", time)
+    # print("source_ip:", source_ip)
+    
+    # raise HTTPException(status_code=501, detail="Function not yet implemented.")
+ 
+    # # 🔍 DEBUG: dataset + params
+    # logging.info(
+    #     "[find_anomalies] Called with num_feat=%s, uid=%s, time=%s, source_ip=%s",
+    #     num_feat,
+    #     uid,
+    #     time,
+    #     source_ip,
+    # )
+    # if df is None:
+    #     logging.error("[find_anomalies] backend_data['df'] is None (no dataset loaded!)")
+    # else:
+    #     logging.info(
+    #         "[find_anomalies] backend_data['df'] shape=%s, columns=%s",
+    #         df.shape,
+    #         list(df.columns),
+    #     )
+
+
     if uid is None: 
         uid = "uid"
         df[uid] = df.index
@@ -79,6 +107,11 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
     if time is None and query["start"] is not None:
         raise HTTPException(status_code=400, detail="No time column specified.")
     backend_data["source_ip"] = source_ip
+    # print("Using uid:", uid)
+    # print("Using time:", time)
+    # print("Using source_ip:", source_ip)
+    # raise HTTPException(status_code=501, detail="Function not yet implemented.")
+    
     # if source_ip is None and query["target_ip"] is not None:
     #     raise HTTPException(status_code=400, detail="No IP column specified.")
     main_identifiers = [uid, time, source_ip] # TODO: decide what to do with timestamp. if we don't want it to be a feature, add here

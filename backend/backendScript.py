@@ -6,7 +6,8 @@ import os, sys
 from backendInterface import add_data, find_anomalies, get_output
 import os, sys
 
-data_path = "/workspaces/adas_capstone_2025/data/real-world/data-cleaning/cleaned_RW21.csv"
+# data_path = "/workspaces/adas_capstone_2025/data/real-world/data-cleaning/cleaned_RW21.csv"
+data_path = "/workspaces/adas_capstone_2025/data/capstone-data/100-entry-test-zeek-data.csv"
 query = {"top_n":3, "num_features":10, "start":None, "end": None, "target_ip":None, "explanation": "simple", "sort_by": None, "uid_column": "uid"}
 #print("add data")
 add_data(data_path)
