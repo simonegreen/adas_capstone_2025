@@ -8,10 +8,17 @@ import { WelcomePanel } from "@/components/chat/WelcomePanel";
 import { useEffect, useRef, useState } from "react";
 
 export const dynamic = "force-dynamic";
+
+interface TableData {
+  cols: string[];
+  rows: any[][];
+}
+
 interface Message {
   id: string;
   type: "user" | "assistant";
   content: string;
+  tableData?: TableData | null;
 }
 
 interface BackendResult {
@@ -57,6 +64,26 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [leftPanelWidth, setLeftPanelWidth] = useState(50); // for draggable divider
   const containerRef = useRef<HTMLDivElement>(null); // for draggable divider
+
+    /** Helper: trigger CSV download of the full backend result */
+  const triggerCsvDownload = (csv: string) => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      link.href = url;
+      link.setAttribute("download", `adas_anomalies_${timestamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Failed to trigger CSV download", e);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,17 +150,21 @@ export default function Page() {
         });
       }
 
+            // ---------- PRETTY TABLE FOR ANOMALIES ----------
       if (result?.anomalies) {
-        // If anomalies contains cols/rows - format as a small CSV/text table for readability
         const an = result.anomalies as { cols: string[]; rows: any[][] };
         if (an.cols && an.rows) {
-          const header = an.cols.join(" | ");
-          const rowsPreview = an.rows.slice(0, 10).map((r) => r.map((c) => String(c)).join(" | ")).join("\n");
-          const tableText = `${header}\n${rowsPreview}${an.rows.length > 10 ? `\n...and ${an.rows.length - 10} more rows` : ""}`;
+          const limitedRows = an.rows.slice(0, 100); // show up to 100 in-table
+
           newMessages.push({
             id: crypto.randomUUID(),
             type: "assistant",
-            content: `Anomalies (table preview):\n${tableText}`,
+            content:
+              "Anomalies (table preview): Top rows from the result. Full CSV downloaded to your device.",
+            tableData: {
+              cols: an.cols,
+              rows: limitedRows,
+            },
           });
         } else {
           newMessages.push({
@@ -144,13 +175,32 @@ export default function Page() {
         }
       }
 
+      // ---------- CSV PREVIEW + AUTO-DOWNLOAD ----------
       if (result?.csv) {
-        const csvPreview = typeof result.csv === "string" ? result.csv.slice(0, 200) : JSON.stringify(result.csv, null, 2);
+        const csvString =
+          typeof result.csv === "string"
+            ? result.csv
+            : JSON.stringify(result.csv, null, 2);
+
+        const csvPreview =
+          typeof csvString === "string"
+            ? csvString.slice(0, 200)
+            : String(csvString);
+
         newMessages.push({
           id: crypto.randomUUID(),
           type: "assistant",
-          content: `CSV preview:\n${csvPreview}${typeof result.csv === "string" && result.csv.length > 200 ? "\n... (truncated)" : ""}`,
+          content: `CSV preview:\n${csvPreview}${
+            typeof csvString === "string" && csvString.length > 200
+              ? "\n... (truncated)"
+              : ""
+          }`,
         });
+
+        // Trigger browser download of the full CSV
+        if (typeof result.csv === "string") {
+          triggerCsvDownload(result.csv);
+        }
       }
 
       // If nothing was produced above, fall back to a simple message
@@ -176,6 +226,7 @@ export default function Page() {
       setIsLoading(false);
     }
   };
+
 
   return (
     <main className="min-h-screen bg-white p-6">

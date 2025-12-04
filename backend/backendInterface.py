@@ -12,7 +12,8 @@ from datetime import datetime, timedelta
 import json
 from dateutil.parser import parse
 from fastapi import HTTPException
-import logging
+import ipaddress
+
 
 
 backend_data = {"df": pd.DataFrame,
@@ -27,6 +28,12 @@ backend_data = {"df": pd.DataFrame,
                 } #the backend "memory"
 
 ##### DATA PREPARATION #####
+def ip_to_int(ip):
+    if ":" not in ip:   # IPv4
+        a, b, c, d = ip.split('.')
+        return (int(a)<<24) + (int(b)<<16) + (int(c)<<8) + int(d)
+    else:               # IPv6
+        return int(ipaddress.IPv6Address(ip))
 
 '''
 Summary: Takes in user-uploaded data, cleans it, and sets the global dataframe.
@@ -84,23 +91,6 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
     # print("source_ip:", source_ip)
     
     # raise HTTPException(status_code=501, detail="Function not yet implemented.")
- 
-    # # 🔍 DEBUG: dataset + params
-    # logging.info(
-    #     "[find_anomalies] Called with num_feat=%s, uid=%s, time=%s, source_ip=%s",
-    #     num_feat,
-    #     uid,
-    #     time,
-    #     source_ip,
-    # )
-    # if df is None:
-    #     logging.error("[find_anomalies] backend_data['df'] is None (no dataset loaded!)")
-    # else:
-    #     logging.info(
-    #         "[find_anomalies] backend_data['df'] shape=%s, columns=%s",
-    #         df.shape,
-    #         list(df.columns),
-    #     )
 
 
     if uid is None: 
@@ -191,11 +181,17 @@ def get_features(data, top_n, main_identifiers):
   feat_options = copy.drop(columns=main_identifiers).copy(deep=True)  # Drop columns like unique IDs that shouldn't be scaled
   print(feat_options.columns)
   feat_options["epoch_time"] = pd.to_datetime(copy[backend_data['time']])
+  
 #   print(feat_options[backend_data['time']].dtype)
 
   
   feat_options["epoch_time"] = feat_options["epoch_time"].astype(int) // 10**9
-  feat_options["int_source_ip"] = copy[backend_data['source_ip']].str.replace('.', '').astype(int)
+  feat_options["int_source_ip"] = copy[backend_data['source_ip']].apply(
+      lambda ip: int(ip.replace('.', ''), 16) if '.' in ip else int(ip.replace(':', ''), 16)
+  )
+
+
+#   feat_options["int_source_ip"] = copy[backend_data['source_ip']].str.replace('.', '').astype(int)
  
   
   print("time!")

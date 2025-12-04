@@ -7,10 +7,17 @@ const actor = Actor({ subsets: ["latin"], weight: "400" });
 
 import Image from "next/image";
 
+interface TableData {
+  cols: string[];
+  rows: any[][];
+}
+
 interface Message {
   id: string;
   type: "user" | "assistant";
   content: string;
+  tableData?: TableData | null;
+
 }
 
 interface WelcomePanelProps {
@@ -54,6 +61,7 @@ export function WelcomePanel({
           height={150}
           className="object-contain"
           priority={false}
+          alt="ADaS bot"
         />
       </div>
 
@@ -76,11 +84,50 @@ export function WelcomePanel({
   ) : (
     <div className="flex-1 overflow-y-auto p-6 space-y-4">
       {userInitiatedMessages.map((message) => (
-        <ChatMessage
-          key={message.id}
-          type={message.type}
-          content={message.content}
-        />
+        <div key={message.id} className="space-y-2">
+          <ChatMessage
+            key={message.id}
+            type={message.type}
+            content={message.content}
+          />
+      {/* Pretty scrollable table, only when tableData is present */}
+          {message.type === "assistant" && message.tableData && (
+            <div className="ml-14"> 
+              {/* small indent so it visually groups with the assistant bubble;
+                  tweak/remove ml-14 depending on how ChatMessage lays out */}
+              <div className="mt-1 max-h-80 overflow-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+                <table className="min-w-full text-xs">
+                  <thead className="sticky top-0 bg-gray-50">
+                    <tr>
+                      {message.tableData.cols.map((col) => (
+                        <th
+                          key={col}
+                          className="px-3 py-2 text-left font-semibold border-b border-gray-200"
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {message.tableData.rows.map((row, idx) => (
+                      <tr key={idx} className="odd:bg-white even:bg-gray-50">
+                        {row.map((cell, cIdx) => (
+                          <td
+                            key={cIdx}
+                            className="px-3 py-1 border-b border-gray-100 align-top"
+                          >
+                            {String(cell)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
       ))}
       {isLoading && (
         <div className="flex gap-3">
@@ -93,6 +140,9 @@ export function WelcomePanel({
     </div>
   );
 
+  const widthStyle =
+    typeof panelWidth === "number" ? { width: `${panelWidth}%` } : undefined;
+  
   return (
     <div
       style={{ width: `${panelWidth}%` }}
