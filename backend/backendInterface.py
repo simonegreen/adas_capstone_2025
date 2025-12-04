@@ -6,8 +6,9 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from backend.reinforcementLearning import run_rl
+from reinforcementLearning import run_rl
 import requests
+from datetime import datetime, timedelta
 import json
 from dateutil.parser import parse
 from fastapi import HTTPException
@@ -17,7 +18,9 @@ import logging
 backend_data = {"df": pd.DataFrame,
                 "uid": None,
                 "time": None,
+                "epoch_time": None,
                 "source_ip": None,
+                "int_source_ip": None,
                 "features": None,
                 "final_features": None,
                 "anomalies": None
@@ -38,7 +41,7 @@ def add_data(file):
     raw_file = pd.read_csv(file.file if hasattr(file, "file") else file)
     cleaned_df = clean_data(raw_file)
     backend_data["df"] = cleaned_df
-
+    # print("At add data", cleaned_df.columns)
     return cleaned_df
 
 def clean_data(df):
@@ -58,6 +61,7 @@ def clean_data(df):
     # Identify which rows/columns were dropped
     dropped_columns = list(set(original_columns) - set(df.columns))
     # print("Dropped columns:", dropped_columns)
+    # print("Current columns", df.columns)
     # print(f"Original shape: {original_shape}, New shape: {df.shape}")
     
     return df
@@ -72,6 +76,7 @@ Output:
 def find_anomalies(query, uid, num_feat, time, source_ip):
     ## VAR SETUP
     df = backend_data["df"]
+    # print("in find anomalies:", df.columns)
     # print("Data shape:", df.shape)    
     # print("num_feat:", num_feat)
     # print("uid:", uid)
@@ -107,6 +112,7 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
     if time is None and query["start"] is not None:
         raise HTTPException(status_code=400, detail="No time column specified.")
     backend_data["source_ip"] = source_ip
+    # print("after adding headings:", df.columns)
     # print("Using uid:", uid)
     # print("Using time:", time)
     # print("Using source_ip:", source_ip)
@@ -125,15 +131,36 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
             if df[i].nunique() > (num_entries / 2) or df[i].nunique() == 1: # if more than 1/2 of data points have a unique label OR all have same label, drop the column. can change this!
                 drop.append(i)
     # print(drop)
+    # print("before drop:", df.columns)
     cleaned_df = df.drop(columns = drop)
     #qual_to_quant(cleaned_df, uid)
     backend_data["df"] = cleaned_df
+    # print("after drop:", cleaned_df.columns)
+
+    # print(cleaned_df.columns)
+    # print(cleaned_df[time])
+    # print(cleaned_df[source_ip])
+
+    # print("source_ip data type", cleaned_df[source_ip].dtype)
+    # print("time data type", cleaned_df[time].dtype)
+    # raise Exception("before get features")
     # print("Final Columns:", str(cleaned_df.shape[1]))
     # print(cleaned_df.head())
 
     pca, features = get_features(cleaned_df, num_feat, main_identifiers)
-    backend_data["features"] = features
 
+    # If scaled time or source IP selected, update name in feature list
+    # if "epoch_time" in features:
+    #     i = np.where(features =="epoch_time")
+    #     features[i]= backend_data['time']
+    # if "int_source_ip" in features:
+    #     i = np.where(features == "int_source_ip")
+    #     features[i]= backend_data['source_ip']
+    backend_data["features"] = features
+    print(features)
+    print("got features")
+
+    #raise Exception("got features. paused.")
     ## REINFORCEMENT LEARNING
     anomalies, cluster_sizes, final_features = run_rl(backend_data) #TODO: others for output data
     backend_data["anomalies"] = anomalies
@@ -160,7 +187,25 @@ importance across all components
 '''
 def get_features(data, top_n, main_identifiers):
   copy = data.copy(deep=True)  # Make a copy of the original data to avoid modifying it
-  feat_options = copy.drop(columns=[backend_data["uid"]]).copy(deep=True)  # Drop columns like unique IDs that shouldn't be scaled
+  print(copy.columns)
+  feat_options = copy.drop(columns=main_identifiers).copy(deep=True)  # Drop columns like unique IDs that shouldn't be scaled
+  print(feat_options.columns)
+  feat_options["epoch_time"] = pd.to_datetime(copy[backend_data['time']])
+#   print(feat_options[backend_data['time']].dtype)
+
+  
+  feat_options["epoch_time"] = feat_options["epoch_time"].astype(int) // 10**9
+  feat_options["int_source_ip"] = copy[backend_data['source_ip']].str.replace('.', '').astype(int)
+ 
+  
+  print("time!")
+  print(feat_options["epoch_time"].dtype)
+  print(feat_options["epoch_time"])
+
+  print("ip!")
+  print(feat_options["int_source_ip"].dtype)
+  print(feat_options["int_source_ip"])
+
 
   # Standardize the data
   scaler = StandardScaler()
@@ -193,6 +238,9 @@ def get_features(data, top_n, main_identifiers):
   #print("Unique Features:", unique_feats.tolist())
 
   # Return the selected unique features
+  backend_data["df"]["int_source_ip"] = feat_options["int_source_ip"]
+  backend_data["df"]["epoch_time"] = feat_options["epoch_time"]
+
   return pca, unique_feats
 
 
@@ -220,20 +268,32 @@ def get_output(query):
     
     # target ip - drop all but where IP is found
     #print(f"Outputing target IP {format["target_ip"]}")
-    targeted_df = output_data[output_data[backend_data['source_ip']] == format["target_ip"]]
-    # check if df is empty; return error if so
-    if targeted_df.empty:
-        raise HTTPException(status_code=400, detail="Target IP not found.")
+    if query["target_ip"] is not None:
+        targeted_df = output_data[output_data[backend_data['source_ip']] == format["target_ip"]]
+        # check if df is empty; return error if so
+        if targeted_df.empty:
+            raise HTTPException(status_code=400, detail="Target IP not found.")
+    else: targeted_df = output_data
 
     # time range - drop all that have ts not within timerange
-    print(f"Outputing within time range {format["time_range"]}")
+    print(f"Outputing within specified time range {format["time_range"]}")
     # drop where time < start and time > end
+    
     start, end = format['time_range']
+    if start is None: start = "0001-01-01 00:00:00"
+    if end is None: end = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    print(f"Outputing within time range {start, end}")
+
+
     # convert start, end, and time column to DT naive
     start = parse(start).replace(tzinfo=None)
     end = parse(end).replace(tzinfo=None)
     targeted_df['datetime-parsed'] = targeted_df[backend_data['time']].apply(lambda x: parse(x).replace(tzinfo=None))
-    timefilter_df = targeted_df[[targeted_df['datetime-parsed'] >= start] & [targeted_df['datetime-parsed'] <= end]]
+    timefilter_df = targeted_df[
+        (targeted_df['datetime-parsed'] >= start) &
+        (targeted_df['datetime-parsed'] <= end)
+    ]
     
     # top n - find top n IPs by quantity. only keep those
     IP_count = timefilter_df[backend_data['source_ip']].value_counts()
@@ -266,6 +326,7 @@ def get_output(query):
     # ON HOLD: sort - choose what column to sort by, default is by IP in desc quantity
     #return output_data
     output_data = topn_df.sort_values(by=backend_data['source_ip'])
+    print("anomaly shape:", output_data.shape)
     output_dict = {
     'cols': output_data.columns.tolist(),
     'rows': output_data.values.tolist()

@@ -536,6 +536,8 @@ def RL(data, original_features_scaled):
 '''
 def run_rl(backend_data):
     features = backend_data["features"]
+    print("Selected features:", features)
+    # raise Exception
     global FEATURES, ALGORITHMS, NUM_ALG, OG_FEATURES
     FEATURES = {k:str(v) for k,v in zip(range(len(features)), features) }
     data = backend_data["df"]
