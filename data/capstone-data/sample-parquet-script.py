@@ -6,7 +6,7 @@ df = pd.read_parquet(file_path)
 
 print(df.shape) 
 
-sample = df.sample(n=100)
+sample = df.sample(n=3000)
 print(sample.shape)
 
 sample.to_csv("/workspaces/adas_capstone_2025/data/sample.csv", index=False)
