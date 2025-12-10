@@ -10,8 +10,8 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 from fastapi import HTTPException
-from reinforcementLearning import run_rl
-from featureMapping import explain_features
+from backend.reinforcementLearning import run_rl
+from backend.featureMapping import explain_features
 
 
 
@@ -268,7 +268,7 @@ Summary
 Input:
 Output:
 '''
-def get_output(query):
+async def get_output(query):
     format = {"top_n": query["top_n"], "time_range": (query['start'], query['end']), "target_ip": query["target_ip"], "explain": query["explanation"], "sortby": query["sort_by"]} #starts with defaults
     csv = backend_data['anomalies'].to_csv(compression={'method': 'gzip'})
     output_data = backend_data["anomalies"].copy(deep=True)
@@ -320,7 +320,9 @@ def get_output(query):
     #print(f"Outputing top {format["top_n"]} IPs")
     
     # explanation
-    res = asyncio.run(explain_features(backend_data["final_features"]))
+    # res = asyncio.run(explain_features(backend_data["final_features"]))
+    print("final_features:", backend_data["final_features"])
+    res = await explain_features(backend_data["final_features"])
     feat_dict = res.final_output.model_dump()
     final_feature_expl = feat_dict['features']
     lookups = None
