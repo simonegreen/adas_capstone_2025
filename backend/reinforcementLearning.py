@@ -482,7 +482,7 @@ def RL(data, original_features_scaled):
     # print("\nmax value located at",max_location)
     max_config = max_location[0][0]
     max_algorithm = max_location[1][0]
-    final_feats = bin_to_features(max_config, 1)
+    final_feats = bin_to_features(max_config, 0) # force actual list output with mode=0
     # print(f"\nUsing algorithm {ALGORITHMS[max_algorithm]} and {final_feats}, max value is:",normed_Q[max_config,max_algorithm])
     #DONE: print(f"Selected features:")
 

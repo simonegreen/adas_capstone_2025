@@ -12,7 +12,7 @@ query = {"top_n":3, "num_features":10, "start":None, "end": None, "target_ip":No
 #print("add data")
 add_data(data_path)
 #print("find anomalies")
-anoms = find_anomalies(query=query, uid="uid", num_feat=10, time="datetime", source_ip="src_ip_zeek")
+anoms = find_anomalies(query=query, uid="Flow ID", num_feat=10, time=" Timestamp", source_ip=" Source IP")
 #print("get output")
 out = get_output(query)
 

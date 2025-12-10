@@ -4,15 +4,14 @@
 # Imports
 import pandas as pd
 import numpy as np
+import requests, asyncio, json, ipaddress
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from reinforcementLearning import run_rl
-import requests
 from datetime import datetime, timedelta
-import json
 from dateutil.parser import parse
 from fastapi import HTTPException
-import ipaddress
+from reinforcementLearning import run_rl
+from featureMapping import explain_features
 
 
 
@@ -191,8 +190,14 @@ def get_features(data, top_n, main_identifiers):
   )
 
 
-#   feat_options["int_source_ip"] = copy[backend_data['source_ip']].str.replace('.', '').astype(int)
- 
+#   feat_options["int_source_ip"] = copy[backend_data['source_ip']].str.replace('.', '')
+#   feat_options["int_source_ip"] = feat_options["int_source_ip"].replace(':', '')
+#   ipv4_mask = copy[backend_data['source_ip']].str.contains(r'^\d+\.\d+\.\d+\.\d+$')
+#   feat_options.loc[ipv4_mask, "int_source_ip"] = ipv4_to_int_fast(copy.loc[ipv4_mask, backend_data['source_ip']])
+#   feat_options.loc[~ipv4_mask, "int_source_ip"] = (copy.loc[ipv4_mask, backend_data['source_ip']].apply(lambda x: int(ipaddress.ip_address(x)))
+# )
+
+#   feat_options["int_source_ip"] = copy[backend_data['source_ip']].apply(hash_ip)
   
   print("time!")
   print(feat_options["epoch_time"].dtype)
@@ -202,7 +207,23 @@ def get_features(data, top_n, main_identifiers):
   print(feat_options["int_source_ip"].dtype)
   print(feat_options["int_source_ip"])
 
+  feat_options = feat_options.replace([np.inf, -np.inf], np.nan)
+  feat_options = feat_options.fillna(0)  # or use median filling
 
+  for col in feat_options.columns:
+    col_data = feat_options[col]
+
+    if col_data.isna().any():
+        print(f"❗ NaNs in {col}")
+
+    if np.isinf(col_data).any():
+        print(f"❗ Inf detected in: {col}")
+
+    if (col_data.abs() > np.finfo(np.float64).max).any():
+        print(f"❗ Overflow! Too large for float64 in: {col}")
+
+    # print("Max per column:")
+    # print(feat_options.max())
   # Standardize the data
   scaler = StandardScaler()
   scaler.fit(feat_options)
@@ -293,11 +314,15 @@ def get_output(query):
     
     # top n - find top n IPs by quantity. only keep those
     IP_count = timefilter_df[backend_data['source_ip']].value_counts()
-    top_n_values = IP_count.head(3)
-    topn_df = timefilter_df[timefilter_df[backend_data['source_ip']].isin(top_n_values)]
+    top_n_values = IP_count.head(format["top_n"])
+    top_vals = top_n_values.index.tolist()
+    topn_df = timefilter_df[timefilter_df[backend_data['source_ip']].isin(top_vals)]
     #print(f"Outputing top {format["top_n"]} IPs")
     
     # explanation
+    res = asyncio.run(explain_features(backend_data["final_features"]))
+    feat_dict = res.final_output.model_dump()
+    final_feature_expl = feat_dict['features']
     lookups = None
     try:
         ip_addresses = topn_df[backend_data["source_ip"]]
@@ -313,22 +338,31 @@ def get_output(query):
             explain = "See anomalies below."
         case "simple":
             #print(format["explain"])
-            explain = f"The following features were used to detect vulnerabilities: {backend_data["final_features"]}"
+            # explain = f"The following features were used to detect anomalies:\n{final_feature_expl}"
+            explain = final_feature_expl
         case "verbose":
             #print(format["explain"])
-            explain = f"The following features were used to detect vulnerabilities: {backend_data["final_features"]} \n See VirusTotal IP reporting below:"
+            # explain = f"The following features were used to detect vulnerabilities:\n{final_feature_expl} \n See VirusTotal IP reporting below:"
+            explain = final_feature_expl
             lookups = vt_reports
 
     # ON HOLD: sort - choose what column to sort by, default is by IP in desc quantity
     #return output_data
     output_data = topn_df.sort_values(by=backend_data['source_ip'])
-    print("anomaly shape:", output_data.shape)
+    keep_columns = [backend_data["source_ip"], backend_data["uid"], backend_data["time"]] + backend_data["final_features"]
+    filtered_output_data = output_data[keep_columns]
+    print("anomaly shape:", filtered_output_data.shape)
     output_dict = {
-    'cols': output_data.columns.tolist(),
-    'rows': output_data.values.tolist()
+    'cols': filtered_output_data.columns.tolist(),
+    'rows': filtered_output_data.values.tolist()
     }
     # structure anomaly output data
     return {'explain':explain, 'vt_lookups': lookups, 'anomalies': output_dict, 'csv': csv}
+
+# def hash_ip(ip: str) -> int:
+#     h = hashlib.blake2b(ip.encode(), digest_size=8)  # 8 bytes = 64-bit
+#     return int.from_bytes(h.digest(), byteorder='big', signed=False)
+
 
 def VT_results(ips):
     reports = {}
