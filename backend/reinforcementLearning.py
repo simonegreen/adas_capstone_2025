@@ -254,7 +254,7 @@ Converts the binary value of state (which represents features selected)
 to both list features and string output res. If mode = 0, returns features.
 If mode = 1, returns res.
 """
-def bin_to_features(state, mode):
+def bin_to_features(state, mode:int):
   state_bin = bin(state)
   #print(state_bin)
   state_bin_arr = np.array([b for b in state_bin[2:]])
@@ -270,10 +270,10 @@ def bin_to_features(state, mode):
   selected_features = OG_FEATURES.iloc[:,idx]
   features = selected_features.columns.tolist()
   res = f"Features Used: {features}"
-  if mode == 0: # return actual feature list
+  if mode == 0: # return the dataframe of selected features
     return selected_features
-  if mode == 1: # return string of feature list
-    return res
+  if mode == 1: # return the actual feature headings list
+    return features
   
 
 def algorithm_prep(state, action, mode):
@@ -482,7 +482,7 @@ def RL(data, original_features_scaled):
     # print("\nmax value located at",max_location)
     max_config = max_location[0][0]
     max_algorithm = max_location[1][0]
-    final_feats = bin_to_features(max_config, 0) # force actual list output with mode=0
+    final_feats = bin_to_features(max_config, 1) # force actual list output with mode=1
     # print(f"\nUsing algorithm {ALGORITHMS[max_algorithm]} and {final_feats}, max value is:",normed_Q[max_config,max_algorithm])
     #DONE: print(f"Selected features:")
 

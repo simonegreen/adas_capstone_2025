@@ -146,14 +146,15 @@ def find_anomalies(query, uid, num_feat, time, source_ip):
     #     i = np.where(features == "int_source_ip")
     #     features[i]= backend_data['source_ip']
     backend_data["features"] = features
-    print(features)
-    print("got features")
+    # print(features)
+    # print("got features")
 
     #raise Exception("got features. paused.")
     ## REINFORCEMENT LEARNING
     anomalies, cluster_sizes, final_features = run_rl(backend_data) #TODO: others for output data
     backend_data["anomalies"] = anomalies
     backend_data["final_features"] = final_features
+    # print("Final Features", final_features)
     return anomalies
 
 '''Converts the qualitative column col in df to quantitative values'''
@@ -176,9 +177,9 @@ importance across all components
 '''
 def get_features(data, top_n, main_identifiers):
   copy = data.copy(deep=True)  # Make a copy of the original data to avoid modifying it
-  print(copy.columns)
+#   print(copy.columns)
   feat_options = copy.drop(columns=main_identifiers).copy(deep=True)  # Drop columns like unique IDs that shouldn't be scaled
-  print(feat_options.columns)
+#   print(feat_options.columns)
   feat_options["epoch_time"] = pd.to_datetime(copy[backend_data['time']])
   
 #   print(feat_options[backend_data['time']].dtype)
@@ -199,13 +200,13 @@ def get_features(data, top_n, main_identifiers):
 
 #   feat_options["int_source_ip"] = copy[backend_data['source_ip']].apply(hash_ip)
   
-  print("time!")
-  print(feat_options["epoch_time"].dtype)
-  print(feat_options["epoch_time"])
+#   print("time!")
+#   print(feat_options["epoch_time"].dtype)
+#   print(feat_options["epoch_time"])
 
-  print("ip!")
-  print(feat_options["int_source_ip"].dtype)
-  print(feat_options["int_source_ip"])
+#   print("ip!")
+#   print(feat_options["int_source_ip"].dtype)
+#   print(feat_options["int_source_ip"])
 
   feat_options = feat_options.replace([np.inf, -np.inf], np.nan)
   feat_options = feat_options.fillna(0)  # or use median filling
@@ -321,13 +322,14 @@ async def get_output(query):
     
     # explanation
     # res = asyncio.run(explain_features(backend_data["final_features"]))
-    print("final_features:", backend_data["final_features"])
+    # print("final_features:", backend_data["final_features"])
     res = await explain_features(backend_data["final_features"])
     feat_dict = res.final_output.model_dump()
     final_feature_expl = feat_dict['features']
     lookups = None
     try:
-        ip_addresses = topn_df[backend_data["source_ip"]]
+        ip_addresses = topn_df[backend_data["source_ip"]].unique().tolist()
+        # print("IP addresses for VT lookup:", ip_addresses)
         vt_reports = VT_results(ip_addresses)
     except:
         vt_reports = [{i:"None Found"} for i in ip_addresses]
