@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 from fastapi import HTTPException
 from backend.reinforcementLearning import run_rl
-from backend.featureMapping import explain_features
+# from backend.featureMapping import explain_features
 
 
 
@@ -323,12 +323,12 @@ async def get_output(query):
     # explanation
     # res = asyncio.run(explain_features(backend_data["final_features"]))
     # print("final_features:", backend_data["final_features"])
-    res = await explain_features(backend_data["final_features"])
-    feat_dict = res.final_output.model_dump()
-    final_feature_expl = feat_dict['features']
+    # res = await explain_features(backend_data["final_features"])
+    # feat_dict = res.final_output.model_dump()
+    # final_feature_expl = feat_dict['features']
     lookups = None
+    ip_addresses = topn_df[backend_data["source_ip"]].unique().tolist()
     try:
-        ip_addresses = topn_df[backend_data["source_ip"]].unique().tolist()
         # print("IP addresses for VT lookup:", ip_addresses)
         vt_reports = VT_results(ip_addresses)
     except:
@@ -342,12 +342,18 @@ async def get_output(query):
             explain = "See anomalies below."
         case "simple":
             #print(format["explain"])
-            # explain = f"The following features were used to detect anomalies:\n{final_feature_expl}"
-            explain = final_feature_expl
+            explain = "See downloaded file 'final_features_expl.json' for features used to detect anomalies."
+            print("Generating feature explanation JSON...")
+            print("final_features:", backend_data["final_features"])
+            lookups = vt_reports
+            # explain = final_feature_expl
         case "verbose":
             #print(format["explain"])
-            # explain = f"The following features were used to detect vulnerabilities:\n{final_feature_expl} \n See VirusTotal IP reporting below:"
-            explain = final_feature_expl
+            # explain = f"The following features were used to detect anomalies:\n{backend_data["final_features"]} \n See VirusTotal IP reporting below:"
+            # explain = final_feature_expl
+            explain = "See downloaded file 'final_features_expl.json' for features used to detect anomalies."
+            print("Generating feature explanation JSON...")
+            print("final_features:", backend_data["final_features"])
             lookups = vt_reports
 
     # ON HOLD: sort - choose what column to sort by, default is by IP in desc quantity
@@ -367,6 +373,8 @@ async def get_output(query):
 #     h = hashlib.blake2b(ip.encode(), digest_size=8)  # 8 bytes = 64-bit
 #     return int.from_bytes(h.digest(), byteorder='big', signed=False)
 
+def store_explain_features(feature_explanations):
+    backend_data["feature_explanations"] = feature_explanations
 
 def VT_results(ips):
     reports = {}
