@@ -1,0 +1,28 @@
+{
+    "features": [
+        {
+            "feature_name": "history",
+            "meaning": "A record of prior interactions for the same endpoint(s) or entity used to establish expected behavior (e.g., past connection counts, frequency, or patterns).",
+            "anomaly_indicators": [
+                "No prior history (new/unseen interaction) — a deviation from baseline that raises suspicion.",
+                "Abrupt or sustained change from historical patterns (frequency, timing, protocols) — may indicate compromise, misuse, or a new malicious activity."
+            ]
+        },
+        {
+            "feature_name": "local_resp",
+            "meaning": "A flag indicating whether the responder (the host answering the connection) is located inside the local/trusted network (internal) versus outside (external).",
+            "anomaly_indicators": [
+                "Responder classified as internal when communication normally involves external services — could indicate unexpected internal service activity or lateral movement.",
+                "Responder classified as external when communication is typically internal — may point to data exfiltration, unexpected routing, or misconfiguration."
+            ]
+        },
+        {
+            "feature_name": "resp_pkts",
+            "meaning": "The number of packets sent by the responder during the observed connection or flow.",
+            "anomaly_indicators": [
+                "Unusually high responder packet counts — may reflect large data transfers, exfiltration, or amplification behavior.",
+                "Very low or many minimal-size responder packets — can indicate scanning, aborted/failed sessions, or protocol-level anomalies."
+            ]
+        }
+    ]
+}

@@ -134,20 +134,68 @@ export default function Page() {
 
       const newMessages: Message[] = [];
 
+      // ---------- EXPLANATION (WILL ALSO HOLD VT TABLE IF PRESENT) ----------
+      let explanationMessage: Message | null = null;
+
       if (result?.explain) {
-        newMessages.push({
+        explanationMessage = {
           id: crypto.randomUUID(),
           type: "assistant",
           content: `Explanation:\n${result.explain}`,
-        });
+        };
       }
 
+      // ---------- VIRUSTOTAL LOOKUPS AS TABLE ----------
       if (result?.vt_lookups && Object.keys(result.vt_lookups).length > 0) {
-        newMessages.push({
-          id: crypto.randomUUID(),
-          type: "assistant",
-          content: `Lookups:\n${JSON.stringify(result.vt_lookups, null, 2)}`,
+        const lookups = result.vt_lookups as Record<string, any>;
+        const ips = Object.keys(lookups);
+
+        const cols = ["Metric", ...ips];
+
+        const metrics = [
+          { key: "country", label: "Country" },
+          { key: "reputation", label: "Reputation" },
+          { key: "malicious", label: "Malicious" },
+          { key: "suspicious", label: "Suspicious" },
+          { key: "undetected", label: "Undetected" },
+          { key: "harmless", label: "Harmless" },
+          { key: "timeout", label: "Timeout" },
+        ];
+
+        const rows = metrics.map(({ key, label }) => {
+          const row: any[] = [label];
+
+          ips.forEach((ip) => {
+            const entry = lookups[ip] || {};
+            if (key === "country" || key === "reputation") {
+              row.push(entry?.[key] ?? "");
+            } else {
+              const stats = entry?.stats ?? {};
+              row.push(stats?.[key] ?? "");
+            }
+          });
+
+          return row;
         });
+
+        // If we already have an explanation message, attach the table to it
+        if (explanationMessage) {
+          explanationMessage.content += `\n\n`;
+          explanationMessage.tableData = { cols, rows };
+        } else {
+          // Otherwise, create a standalone VirusTotal message
+          explanationMessage = {
+            id: crypto.randomUUID(),
+            type: "assistant",
+            content: "See VirusTotal IP reporting below:",
+            tableData: { cols, rows },
+          };
+        }
+      }
+
+      // Push explanation/vt message (if any)
+      if (explanationMessage) {
+        newMessages.push(explanationMessage);
       }
 
             // ---------- PRETTY TABLE FOR ANOMALIES ----------

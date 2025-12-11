@@ -85,7 +85,7 @@ async def intent(req: IntentRequest):
                 source_ip=backend_data.get("source_ip"),
             )
 
-            res = await bi_get_output(query)
+            res = bi_get_output(query)
 
             return {
                 "ok": True,

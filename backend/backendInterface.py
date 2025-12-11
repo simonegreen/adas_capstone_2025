@@ -4,7 +4,7 @@
 # Imports
 import pandas as pd
 import numpy as np
-import requests, asyncio, json, ipaddress
+import requests, json, ipaddress
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from datetime import datetime, timedelta
@@ -269,7 +269,7 @@ Summary
 Input:
 Output:
 '''
-async def get_output(query):
+def get_output(query):
     format = {"top_n": query["top_n"], "time_range": (query['start'], query['end']), "target_ip": query["target_ip"], "explain": query["explanation"], "sortby": query["sort_by"]} #starts with defaults
     csv = backend_data['anomalies'].to_csv(compression={'method': 'gzip'})
     output_data = backend_data["anomalies"].copy(deep=True)
