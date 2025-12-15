@@ -25,3 +25,11 @@ watch nvidia-smi
 ```
 
 This gives an overview of the resource utilization:
+
+### Helpful Tip: Detaching tmux session
+To create multiple terminal sessions, use the following commands. This is helpful when running code in one terminal and observing gpu-utilization in another:
+```
+tmux new-session -d -s <sessionname>
+tmux switch-client -t <sessionname>
+```
+
