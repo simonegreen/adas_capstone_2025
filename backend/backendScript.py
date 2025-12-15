@@ -3,12 +3,12 @@
 # specify data file path
 import os, sys
 # sys.path.insert(0, os.path.join(os.getcwd(), "backend"))
-from backendInterface import add_data, find_anomalies, get_output
+from backend.backendInterface import add_data, find_anomalies, get_output
 import asyncio
 
 # data_path = "/workspaces/adas_capstone_2025/data/real-world/data-cleaning/cleaned_RW21.csv"
 # data_path = "/workspaces/adas_capstone_2025/data/capstone-data/100-entry-test-zeek-data.csv"
-data_path = "/workspaces/adas_capstone_2025/data/capstone-data/sampled_zeek22_500.csv"
+data_path = "data/capstone-data/sampled_zeek22_500.csv"
 query = {"top_n":3, "num_features":10, "start":None, "end": None, "target_ip":None, "explanation": "verbose", "sort_by": None, "uid_column": "uid"}
 print("add data")
 add_data(data_path)
