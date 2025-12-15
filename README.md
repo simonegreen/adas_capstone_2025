@@ -2,6 +2,9 @@
 
 Must be run on an NVIDIA Volta GPU or higher and compute cpcability 7.0+. (Some examples used during testing were RTX A5000, RTX 4090, A100, and H100 provisioned through Vast.ai)
 
+We used the NVIDIA CUDA template with the docker image:
+**nvidia/cuda:12.2.0-runtime-ubuntu22.04**
+
 ### Environment setup
 Ru the setup script using the following command. This will install all correct package versions required to run the RAPIDSAI libraries:
 ```python
