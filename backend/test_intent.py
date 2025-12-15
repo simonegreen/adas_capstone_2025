@@ -13,12 +13,12 @@ def show(q: str):
 
 if __name__ == "__main__":
     # try a few messages
-    show("get top 5 anomalies in the past week")
-    show("get top 5 anomalies for last week")
-    show("get top 5 anomalies for today")
-    show("get top 5 anomalies from this tuesday to thursday")
-    show("get top 10 anomalies for last month")
-    show("rerun with 15 features")
-    show("why is IP 10.0.0.7 anomalous? explanation")
-    show("show me some anomalies")
-    show("give me a summary for last month")
+    show("get top 5 anomalies in the past week") # none
+    show("get top 5 anomalies for last week") # none
+    show("get top 5 anomalies for today")# none
+    show("get top 5 anomalies from this tuesday to thursday")# none
+    show("get top 10 anomalies for last month")# none
+    show("rerun with 15 features")# none
+    show("why is IP 10.0.0.7 anomalous? explanation") # verbose
+    show("show me some anomalies") # none
+    show("give me a summary for last month") # verbose

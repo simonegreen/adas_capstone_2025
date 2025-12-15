@@ -254,7 +254,7 @@ Converts the binary value of state (which represents features selected)
 to both list features and string output res. If mode = 0, returns features.
 If mode = 1, returns res.
 """
-def bin_to_features(state, mode):
+def bin_to_features(state, mode:int):
   state_bin = bin(state)
   #print(state_bin)
   state_bin_arr = np.array([b for b in state_bin[2:]])
@@ -270,10 +270,10 @@ def bin_to_features(state, mode):
   selected_features = OG_FEATURES.iloc[:,idx]
   features = selected_features.columns.tolist()
   res = f"Features Used: {features}"
-  if mode == 0: # return actual feature list
+  if mode == 0: # return the dataframe of selected features
     return selected_features
-  if mode == 1: # return string of feature list
-    return res
+  if mode == 1: # return the actual feature headings list
+    return features
   
 
 def algorithm_prep(state, action, mode):
@@ -308,7 +308,7 @@ def algorithm_prep(state, action, mode):
 # Copyright 2018 Denis Rothman MIT License. See LICENSE.
 import numpy as ql
 
-def RL():
+def RL(data, original_features_scaled):
 
     # R is The Reward Matrix for each state
     # 1024 configurations of the 10 features --> 2^10
@@ -454,7 +454,7 @@ def RL():
             action = ActionChoice(PossibleAction, current_state)
         visited_pairs[current_state, action] = True  
         
-        print("Algorithm:", ALGORITHMS[action])
+        # print("Algorithm:", ALGORITHMS[action])
         reward(current_state,action,gamma)
         #visited_states.add((current_state, action))
 
@@ -469,21 +469,21 @@ def RL():
         # 95% of the time, we choose the random action and state 
         
     # Displaying Q before the norm of Q phase
-    print("Q:")
-    print(Q)
+    # print("Q:")
+    # print(Q)
 
     # Norm of Q
-    print("Normed Q:")
-    print(Q/ql.max(Q)*100)
+    # print("Normed Q:")
+    # print(Q/ql.max(Q)*100)
 
     # DONE: get maximum value from Q-Learning Matrix
     normed_Q = Q/ql.max(Q)*100
     max_location = np.where(normed_Q==normed_Q.max())
-    print("\nmax value located at",max_location)
+    # print("\nmax value located at",max_location)
     max_config = max_location[0][0]
     max_algorithm = max_location[1][0]
-    final_feats = bin_to_features(max_config, 1)
-    print(f"\nUsing algorithm {ALGORITHMS[max_algorithm]} and {final_feats}, max value is:",normed_Q[max_config,max_algorithm])
+    final_feats = bin_to_features(max_config, 1) # force actual list output with mode=1
+    # print(f"\nUsing algorithm {ALGORITHMS[max_algorithm]} and {final_feats}, max value is:",normed_Q[max_config,max_algorithm])
     #DONE: print(f"Selected features:")
 
     # get final cluster labels
@@ -536,7 +536,9 @@ def RL():
 '''
 def run_rl(backend_data):
     features = backend_data["features"]
-
+    print("Selected features:", features)
+    # raise Exception
+    global FEATURES, ALGORITHMS, NUM_ALG, OG_FEATURES
     FEATURES = {k:str(v) for k,v in zip(range(len(features)), features) }
     data = backend_data["df"]
     ALGORITHMS = {0: 'DBSCAN Clustering', 1: 'Mean Shift', 2: 'K-Mediods', 3: 'EM Clustering', 4: 'K-Means'}
@@ -546,12 +548,12 @@ def run_rl(backend_data):
 
     scaler = StandardScaler()
     original_features_scaled = scaler.fit_transform(OG_FEATURES)
-    if backend_data["uid"] == None:
-        data['uid'] = data.index # comment out for IoT-23/BoT-IoT
-        backend_data["uid"] = "uid"
+    # if backend_data["uid"] == None:
+    #     data['uid'] = data.index # comment out because done in feature selection
+    #     backend_data["uid"] = "uid"
     event_ids = data[backend_data["uid"]]
 
-    anomalies, cluster_sizes, final_features = RL()
+    anomalies, cluster_sizes, final_features = RL(data, original_features_scaled)
     return anomalies, cluster_sizes, final_features
 
 

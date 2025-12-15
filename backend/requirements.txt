@@ -8,3 +8,5 @@ scikit-learn
 scikit-learn-extra
 openai>=1.40.0
 python-dotenv
+openai-agents
+pydantic

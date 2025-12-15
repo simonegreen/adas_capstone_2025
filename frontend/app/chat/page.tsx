@@ -8,10 +8,34 @@ import { WelcomePanel } from "@/components/chat/WelcomePanel";
 import { useEffect, useRef, useState } from "react";
 
 export const dynamic = "force-dynamic";
+
+interface TableData {
+  cols: string[];
+  rows: any[][];
+}
+
 interface Message {
   id: string;
   type: "user" | "assistant";
   content: string;
+  tableData?: TableData | null;
+}
+
+interface BackendResult {
+  explain?: string;
+  vt_lookups?: Record<string, any> | null;
+  anomalies?: { cols: string[]; rows: any[][] } | null;
+  csv?: string | null;
+  [k: string]: any;
+}
+
+interface BackendResponse {
+  ok: boolean;
+  action?: string;
+  result?: BackendResult;
+  message?: string;
+  error?: string;
+  [k: string]: any;
 }
 
 const defaultMessages: Message[] = [
@@ -41,40 +65,25 @@ export default function Page() {
   const [leftPanelWidth, setLeftPanelWidth] = useState(50); // for draggable divider
   const containerRef = useRef<HTMLDivElement>(null); // for draggable divider
 
-  // useEffect(() => {
-  //   const handleMouseMove = (e: MouseEvent) => {
-  //     if (!containerRef.current) return;
+    /** Helper: trigger CSV download of the full backend result */
+  const triggerCsvDownload = (csv: string) => {
+    if (typeof window === "undefined") return;
 
-  //     const container = containerRef.current;
-  //     const rect = container.getBoundingClientRect();
-  //     const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
-
-  //     if (newWidth > 20 && newWidth < 80) {
-  //       setLeftPanelWidth(newWidth);
-  //     }
-  //   };
-
-  //   const handleMouseUp = () => {
-  //     document.removeEventListener("mousemove", handleMouseMove);
-  //     document.removeEventListener("mouseup", handleMouseUp);
-  //   };
-
-  //   const handleDividerMouseDown = () => {
-  //     document.addEventListener("mousemove", handleMouseMove);
-  //     document.addEventListener("mouseup", handleMouseUp);
-  //   };
-
-  //   const divider = containerRef.current?.querySelector('[data-divider]');
-  //   if (divider) {
-  //     divider.addEventListener("mousedown", handleDividerMouseDown);
-  //   }
-
-  //   return () => {
-  //     if (divider) {
-  //       divider.removeEventListener("mousedown", handleDividerMouseDown);
-  //     }
-  //   };
-  // }, []);
+    try {
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      link.href = url;
+      link.setAttribute("download", `adas_anomalies_${timestamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Failed to trigger CSV download", e);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +108,15 @@ export default function Page() {
         body: JSON.stringify({ message: userText }),
       });
 
-      const data = await resp.json().catch(() => ({}));
+      const data: BackendResponse = await resp.json().catch(() => ({} as BackendResponse));
+
+      // Debug logging (temporary)
+      console.log("Full backend data:", data);
+      console.log("Result:", data.result);
+      console.log("Explain:", data.result?.explain);
+      console.log("VT lookups:", data.result?.vt_lookups);
+      console.log("Anomalies:", data.result?.anomalies);
+      console.log("CSV:", data.result?.csv);
 
       if (!resp.ok || !data.ok) {
         const errorMsg = data?.error || data?.message || "Backend error";
@@ -112,16 +129,139 @@ export default function Page() {
         return;
       }
 
-      // Success path
-      const summaryText = data.result?.summary || data.message || "Done";
-      console.log("anomalies table from backend:", data.result?.table);
+      // Success path: expand result into multiple assistant messages
+      const result = data.result as BackendResult | undefined;
 
-      const assistantMessage: Message = {
-        id: crypto.randomUUID(),
-        type: "assistant",
-        content: summaryText,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      const newMessages: Message[] = [];
+
+      // ---------- EXPLANATION (WILL ALSO HOLD VT TABLE IF PRESENT) ----------
+      let explanationMessage: Message | null = null;
+
+      if (result?.explain) {
+        explanationMessage = {
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: `Explanation:\n${result.explain}`,
+        };
+      }
+
+      // ---------- VIRUSTOTAL LOOKUPS AS TABLE ----------
+      if (result?.vt_lookups && Object.keys(result.vt_lookups).length > 0) {
+        const lookups = result.vt_lookups as Record<string, any>;
+        const ips = Object.keys(lookups);
+
+        const cols = ["Metric", ...ips];
+
+        const metrics = [
+          { key: "country", label: "Country" },
+          { key: "reputation", label: "Reputation" },
+          { key: "malicious", label: "Malicious" },
+          { key: "suspicious", label: "Suspicious" },
+          { key: "undetected", label: "Undetected" },
+          { key: "harmless", label: "Harmless" },
+          { key: "timeout", label: "Timeout" },
+        ];
+
+        const rows = metrics.map(({ key, label }) => {
+          const row: any[] = [label];
+
+          ips.forEach((ip) => {
+            const entry = lookups[ip] || {};
+            if (key === "country" || key === "reputation") {
+              row.push(entry?.[key] ?? "");
+            } else {
+              const stats = entry?.stats ?? {};
+              row.push(stats?.[key] ?? "");
+            }
+          });
+
+          return row;
+        });
+
+        // If we already have an explanation message, attach the table to it
+        if (explanationMessage) {
+          explanationMessage.content += `\n\n`;
+          explanationMessage.tableData = { cols, rows };
+        } else {
+          // Otherwise, create a standalone VirusTotal message
+          explanationMessage = {
+            id: crypto.randomUUID(),
+            type: "assistant",
+            content: "See VirusTotal IP reporting below:",
+            tableData: { cols, rows },
+          };
+        }
+      }
+
+      // Push explanation/vt message (if any)
+      if (explanationMessage) {
+        newMessages.push(explanationMessage);
+      }
+
+            // ---------- PRETTY TABLE FOR ANOMALIES ----------
+      if (result?.anomalies) {
+        const an = result.anomalies as { cols: string[]; rows: any[][] };
+        if (an.cols && an.rows) {
+          const limitedRows = an.rows.slice(0, 100); // show up to 100 in-table
+
+          newMessages.push({
+            id: crypto.randomUUID(),
+            type: "assistant",
+            content:
+              "Anomalies (table preview): Top rows from the result. Full CSV downloaded to your device.",
+            tableData: {
+              cols: an.cols,
+              rows: limitedRows,
+            },
+          });
+        } else {
+          newMessages.push({
+            id: crypto.randomUUID(),
+            type: "assistant",
+            content: `Anomalies:\n${JSON.stringify(result.anomalies, null, 2)}`,
+          });
+        }
+      }
+
+      // ---------- CSV PREVIEW + AUTO-DOWNLOAD ----------
+      if (result?.csv) {
+        const csvString =
+          typeof result.csv === "string"
+            ? result.csv
+            : JSON.stringify(result.csv, null, 2);
+
+        const csvPreview =
+          typeof csvString === "string"
+            ? csvString.slice(0, 200)
+            : String(csvString);
+
+        newMessages.push({
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: `CSV preview:\n${csvPreview}${
+            typeof csvString === "string" && csvString.length > 200
+              ? "\n... (truncated)"
+              : ""
+          }`,
+        });
+
+        // Trigger browser download of the full CSV
+        if (typeof result.csv === "string") {
+          triggerCsvDownload(result.csv);
+        }
+      }
+
+      // If nothing was produced above, fall back to a simple message
+      if (newMessages.length === 0) {
+        const fallback = data.message || "Done";
+        newMessages.push({
+          id: crypto.randomUUID(),
+          type: "assistant",
+          content: fallback,
+        });
+      }
+
+      setMessages((prev) => [...prev, ...newMessages]);
     } catch (err: any) {
       console.error("Error calling backend:", err);
       const assistantMessage: Message = {
@@ -135,26 +275,20 @@ export default function Page() {
     }
   };
 
-  const handleNewChat = () => {
-    setMessages(defaultMessages);
-    setInputValue("");
-  };
-  
+
   return (
     <main className="min-h-screen bg-white p-6">
       <div className="max-w-6xl mx-auto grid gap-6">
         <TopBanner />
         {/* 2-column content area */}
-        <div 
-          ref={containerRef} 
+        <div
+          ref={containerRef}
           className="grid gap-6"
           style={{
             gridTemplateColumns: `minmax(0, ${leftPanelWidth}%) minmax(0, ${100 - leftPanelWidth}%)`,
           }}
         >
-          {/* <QueryGuideline /> */}
           <DraftLeft />
-          {/* <DraggableDivider /> */}
           <WelcomePanel
             messages={messages}
             // panelWidth={100 - leftPanelWidth}

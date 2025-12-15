@@ -19,3 +19,4 @@ backend/.env*
 backend/__pycache__/
 backend/api/__pycache__/
 backend/LLM/__pycache__/
+.DS_Store

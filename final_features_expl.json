@@ -1,0 +1,52 @@
+{
+    "features": [
+        {
+            "feature_name": "history",
+            "meaning": "A compact record of connection-level state transitions/events observed for the session (e.g., TCP flag sequences and session events).",
+            "anomaly_indicators": [
+                "Unusual sequences (many resets, repeated SYNs, incomplete handshakes) indicate scanning, failed/half-open connections, or probing.",
+                "Rapid or repeated state changes suggest retries, interference, or automated attack tools rather than normal client-server behavior."
+            ]
+        },
+        {
+            "feature_name": "orig_bytes",
+            "meaning": "Total number of application/payload bytes sent from the originator to the responder.",
+            "anomaly_indicators": [
+                "Unusually large totals can indicate bulk data transfer or possible data exfiltration.",
+                "Consistently tiny byte counts (small repeated payloads) can signal beaconing/command-and-control or automated probing."
+            ]
+        },
+        {
+            "feature_name": "orig_pkts",
+            "meaning": "Total number of packets transmitted by the originator during the session.",
+            "anomaly_indicators": [
+                "High packet count with low bytes often signals scanning, port probing, or low-volume flooding attempts.",
+                "Very few packets carrying many bytes can indicate bulk transfers or tunneling that differ from expected conversational patterns."
+            ]
+        },
+        {
+            "feature_name": "resp_bytes",
+            "meaning": "Total number of application/payload bytes sent from the responder back to the originator.",
+            "anomaly_indicators": [
+                "Large responder byte volumes may indicate file downloads, data leakage, or an exploitable service returning large payloads.",
+                "Small but frequent responder payloads can indicate command-and-control callbacks or automated probe responses."
+            ]
+        },
+        {
+            "feature_name": "resp_ip_bytes",
+            "meaning": "Total bytes sent by the responder measured at the IP layer (includes IP and transport headers in addition to payload).",
+            "anomaly_indicators": [
+                "When much larger than resp_bytes, it indicates many small packets or high header overhead—common in amplification or flood activity.",
+                "Significant mismatch with payload bytes can reveal abnormal packetization, fragmentation, or header-heavy traffic used to evade detection."
+            ]
+        },
+        {
+            "feature_name": "resp_pkts",
+            "meaning": "Total number of packets sent by the responder during the session.",
+            "anomaly_indicators": [
+                "High responder packet count with low payload per packet suggests response flooding, amplification, or many small probe replies.",
+                "Low packet count with large total bytes implies bulk transfer or streaming behavior that may be atypical for the service."
+            ]
+        }
+    ]
+}
