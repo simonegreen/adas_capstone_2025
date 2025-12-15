@@ -80,9 +80,11 @@ Replace the URL with your own public Codespaces backend URL if different.
 
 ### Install frontend dependencies and start dev server
 
-cd frontend
-npm i
-npm run dev
+Run
+`cd frontend`
+`npm i`
+`npm run dev`
+
 
 
 Open the frontend URL shown in the terminal.
@@ -97,7 +99,7 @@ In the frontend UI, upload a CSV dataset.
 
 Example dataset used in the demo:
 
-/workspaces/adas_capstone_2025/data/capstone-data/sampled_zeek22_100.csv
+*/workspaces/adas_capstone_2025/data/capstone-data/sampled_zeek22_100.csv*
 
 
 <!-- Screenshot: Dataset upload UI -->
@@ -112,7 +114,7 @@ When prompted, enter the following field mappings:
 - **uid (optional)**: `uid`
 - **time (optional)**: `datetime`
 
-![Data upload step](data/Demo/data upload.png)
+![Data upload step](data/Demo/data_upload.png)
 
 ---
 
@@ -131,8 +133,8 @@ What are the top 2 anomalies? Explain.
 
 The frontend will display the anomaly results and explanation returned by the backend.
 
-![Output shown – part 1](data/Demo/output-shown-1.png)
-![Output shown – part 2](data/Demo/output-shown-2.png)
+![Output shown – part 1](data/Demo/output_1.png)
+![Output shown – part 2](data/Demo/output_2.png)
 
 ---
 
