@@ -6,7 +6,7 @@ import pandas as pd
 # for zeek data, use 2022-02-06 - 2022-02-13 anomalous data and 2022-01-09 - 2022-01-16 benign data
 pathA = "/workspaces/adas_capstone_2025/data/capstone-data/UWF-zeek22-anomalies.parquet"
 pathB = "/workspaces/adas_capstone_2025/data/capstone-data/UWF-zeek22-benign1-16.parquet"
-targetSize = 500
+targetSize = 100
 out_path = f"/workspaces/adas_capstone_2025/data/capstone-data/sampled_zeek22_{targetSize}.csv"
 
 

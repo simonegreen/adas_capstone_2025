@@ -14,7 +14,6 @@ from backend.reinforcementLearning import run_rl
 # from backend.featureMapping import explain_features
 
 
-
 backend_data = {"df": pd.DataFrame,
                 "uid": None,
                 "time": None,

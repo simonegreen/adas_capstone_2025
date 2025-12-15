@@ -3,7 +3,7 @@ from featureMapping import explain_features
 import asyncio
 import json
 
-res = asyncio.run(explain_features(['history', 'local_resp', 'resp_pkts']))
+res = asyncio.run(explain_features(['history', 'orig_bytes', 'orig_pkts', 'resp_bytes', 'resp_ip_bytes', 'resp_pkts']))
 feat_dict = res.final_output.model_dump()
 feat_json = json.dumps(feat_dict, indent=2)
 
