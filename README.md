@@ -135,6 +135,8 @@ The frontend will display the anomaly results and explanation returned by the ba
 
 ![Output shown – part 1](data/Demo/output_1.png)
 ![Output shown – part 2](data/Demo/output_2.png)
+
+Downloaded Feature Explanation:
 ![Feature_explanation](data/Demo/feature_explanation.png)
 
 Downloaded results saved in CSV:
