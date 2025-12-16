@@ -10,7 +10,7 @@ For our previous project, please refer to the [ADaS 1.0 Project Wiki](https://gi
 ## GPU-Acceleration
  
 
-For detailed instructions on setting up and running the GPU-accelerated version of ADaS (including CUDA, RAPIDS, and GPU monitoring), please refer to the [GPU Version README(https://github.com/simonegreen/autonomous_datascientist/wiki](https://github.com/simonegreen/adas_capstone_2025/tree/gpu-final?tab=readme-ov-file#gpu-version)
+For detailed instructions on setting up and running the GPU-accelerated version of ADaS (including CUDA, RAPIDS, and GPU monitoring), please refer to the [GPU Version README](https://github.com/simonegreen/adas_capstone_2025/tree/gpu-final?tab=readme-ov-file#gpu-version) 
 
 ## ADaS Capstone Demo Guide
 
